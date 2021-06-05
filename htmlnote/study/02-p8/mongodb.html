@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>mongodb</title>
+
+    <link rel="stylesheet" href="../00-static/base.css">
+    <style>
+
+    </style>
+
+    <script src="../00-static/base.js"></script>
+
+</head>
+<body>
+
+<pre>
+
+    <h2 class="anchor">概述</h2>
+    第一课跳过 需要补课
+    https://ke.qq.com/course/3067207?tuin=9054ae39
+
+
+    <h2 class="anchor">安装</h2>
+    下载
+        https://www.mongodb.com/ 顶部Software 社区版免费
+        version 一般偶数是稳定版 现在基本都是稳定版
+        Package tgz bin下有mongo、mongod、mongos
+        wget http：//***
+    创建
+        mongodb/data
+        mongodb/logs
+        mongodb/conf/mongo.conf
+            dpath=/opt/mongodb/data
+            logpath=/opt/mongodb/logs/mongodb.log
+
+            port=27017
+            # start background
+            fork=true
+    解压
+        tar -zxvf mong***
+    环境变量
+        bin目录加入环境变量
+    不需要编译、安装
+    启动
+        mongod --dbpath /opt/mongodb/data --port 27017 --logpath /opt/mongodb/logs/ --fork
+        mongod -f
+    连接
+        mongo --默认连接27017
+    库操作
+        show dbs --显示所有数据库
+        use mashibing --创建了一个数据库
+        db.shop.insert({})
+
+
+
+
+
+
+
+    <h2 class="anchor">配置文件</h2>
+    https://blog.51cto.com/xiaorenwutest/2136424
+
+    第一种 官方推荐 适合2.6+ yaml格式
+        systemLog:
+            destination: "file"
+            path: "/opt/mongodb/logs/27017.log"
+            logAppend: true
+            # logRotate: true
+        storage:
+            journal:
+               enabled: true
+            dbPath: "/opt/mongodb/data/27017"
+            directoryPerDB: true
+            # engine:
+            wiredTiger:
+             engineConfig:
+                #如果一台机器启动一个实例这个可以注释选择默认，
+                #如果一台机器启动多个实例，需要设置内存大小，避免互相抢占内存
+                cacheSizeGB: 2.5
+                directoryForIndexes: true
+        processManagement:
+            fork: true
+            pidFilePath: "/opt/mongodb/pid/27017.pid"
+            # timeZoneInfo: "/usr/share/zoneinfo"
+        net:
+            port: 27017
+            # maxIncomingConnections: 2000
+            bindIpAll: true  # bind all IPv4 & IPv6 addr
+            # bindIp: 0.0.0.0  # 0.0.0.0 = bindIpAll
+            #http:
+             #     enabled: true
+              #    RESTInterfaceEnabled: true
+        #security:
+        #   keyFile: "/opt/mongodb/key/27017"
+        #   clusterAuthMode: "keyFile"
+        #   authorization: "enabled"
+        replication:
+            # oplogSizeMB: 1024
+            replSetName: "osyunwei"
+
+    第二种 适合所有
+        port=27017
+        dbpath=/home/data/mongodb/mongodb_data/
+        logpath=/home/data/mongodb/mongodb_log/mongodb.log
+        pidfilepath=/usr/local/mongodb/mongo.pid
+        fork=true
+        logappend=true
+        shardsvr=true
+        directoryperdb=true
+        #auth=true
+        #keyFile =/usr/local/mongodb/keyfile
+        replSet =osyunwei
+        # 开启安全认证 需要在PRIMARY节点创建认证用户 见添加用户
+        auth=true // PRIMARY节点
+        oplogSize=100
+        keyFile=/usr/local/mongodb-4.0.2/keyfile
+
+    <h2 class="anchor">添加用户</h2>
+    use admin
+    db.createUser( {
+        user: "health_mg",
+        pwd: "health_mg@123",
+        roles: [ { role: "root", db: "admin" } ]
+    });
+
+
+    db.createUser({user: "health_mg",pwd:"health_mg@123",roles:[{role:"root",db:"admin"}]});
+    rs.initiate({_id:"health-mongo-replica",members:[
+            {_id:0,host:"health-kafka-01:27017",priority:2},
+            {_id:1,host:"health-kafka-02:27018",priority:1},
+            {_id:2,host:"health-kafka-03:27019",arbiterOnly:true}
+        ]});
+    <h2 class="anchor">副本集</h2>
+    https://blog.csdn.net/pengjunlee/article/details/84101732
+
+    mongo replSet.js --非交互式 执行脚本
+    replSet.js --添加副本集
+        rs.initiate({_id:"mongodb-set",members:[
+            {_id:0,host:"192.168.26.129:27017",priority:2},
+            {_id:1,host:"192.168.26.129:27018",priority:1},
+            {_id:2,host:"192.168.26.129:27019",arbiterOnly:true}
+        ]});
+    mongo 127.0.0.1:$port/admin --eval "db.shutdownServer()" --停止mongodb服务
+        使用kill pid 停止会出现一堆问题
+
+    副本集更新
+        # 向副本集中添加成员
+        rs.add("172.16.250.240:27017")
+        # 从副本集中删除成员
+        rs.remove("172.16.250.240:27017")
+        # 向副本集中添加仲裁
+        rs.addArb("172.16.250.240:27017")
+        # 向副本集中添加备份节点
+        rs.add({"_id":3,"host":"172.16.250.240:27017","priority":0,"hidden":true})
+    更改副本集配置
+        rs0:PRIMARY> var conf=rs.conf()
+        rs0:PRIMARY> conf.members[1].priority = 5
+        5
+
+        # PRIMARY节点上执行如下命令
+        rs0:PRIMARY> rs.reconfig(conf)
+        {
+            "ok" : 1,
+            "operationTime" : Timestamp(1542248518, 1),
+            "$clusterTime" : {
+                "clusterTime" : Timestamp(1542248518, 1),
+                "signature" : {
+                    "hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+                    "keyId" : NumberLong(0)
+                }
+            }
+        }
+
+        # SECONDARY节点上执行如下命令，需增加 force 参数
+        rs0:SECONDARY> rs.reconfig(conf,{force:true})
+        {
+            "ok" : 1,
+            "operationTime" : Timestamp(1542248726, 1),
+            "$clusterTime" : {
+                "clusterTime" : Timestamp(1542248726, 1),
+                "signature" : {
+                    "hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+                    "keyId" : NumberLong(0)
+                }
+            }
+        }
+    例如，强制让一个节点成为Primary，可以将该节点的优先级设置成最高。
+        cfg = rs.conf()
+        cfg.members[0].priority = 5
+        cfg.members[1].priority = 1
+        cfg.members[2].priority = 1
+        rs.reconfig(cfg)
+
+
+    <h2 class="anchor">BUG</h2>
+    无法创建用户：
+        描述： use admin → db.createUser() 报错not master and slaveok=false
+        原因： 配置使用集群模式，但没有初始化集群，mongodb认为当前节点是集群备节点，由于集群错误所以不能添加用户等操作
+        解决： 集群中将自己添加进去
+            rs.initiate({_id:"mongodb-set",members:[{_id:0,host:"192.168.26.129:27017",priority:2}]})
+
+    <h2 class="anchor">...</h2>
+
+</pre>
+
+</body>
+</html>

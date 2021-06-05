@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>基础控件</title>
+
+    <link rel="stylesheet" href="00-static/base.css">
+    <script src="00-static/base.js"></script>
+
+    <style>
+
+    </style>
+</head>
+<body>
+
+<pre>
+
+    <h2 class="anchor">jar包安装到本地</h2>
+    install.bat
+        mvn install:install-file -Dfile=%1 -DgroupId=xx.xxx -DartifactId=xxx -Dversion=1.0.0 -Dpackaging=jar
+
+    <h2 class="anchor">jar包发布到私服</h2>
+    mvn seetings.xml add config
+        &lt;server>
+            &lt;id>respid&lt;/id>
+            &lt;username>&lt;username>
+            &lt;password>&lt;/password>
+        &lt;/server>
+    depoly.bat
+        mvn deploy:deploy-file -Dfile=%1 -DgroupId=xxx.xxx -DartifactId=xxx -Dversion=1.0.0-SNAPSHOT \
+        -Dpackaging=jar -Durl=http://127.0.0.1:8081/repository/maven-snapshots/ -DrepositoryId=respid
+    一行 不能回车换行
+
+    <h2 class="anchor">...</h2>
+
+</pre>
+
+</body>
+</html>

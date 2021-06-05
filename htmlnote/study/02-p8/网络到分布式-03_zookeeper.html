@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>zookeeper</title>
+
+    <link rel="stylesheet" href="../00-static/base.css">
+    <style>
+
+    </style>
+
+    <script src="../00-static/base.js"></script>
+
+</head>
+<body>
+
+<pre>
+
+    <h2 class="anchor">概念</h2>
+    官网 zookeeper.apache.org
+    引入
+        leader挂了, 服务不可用, 不可靠,
+        事实 zk集群极其高可用
+        若有一种方式可以快速恢复出一个leader
+    模型 --简单的主从
+        只有一个主节点
+        所有发生在从节点的写操作都会转给主节点 然后按顺序执行
+    两种状态
+        可用 有主
+        不可用 无主
+        不可用恢复到可用应该越快越好 官方压测200ms
+    目录树结构
+        节点 可以存数据 官方限制1M 不要当做数据库用 为了达到高性能
+            持久节点
+            临时节点 --客户端连接到zookeeper会产生一个session(创建 销毁)
+                create -e ***
+        序列节点(逻辑) --持久节点和临时节点可以带序列号
+            create -s ***
+        功能
+            1 统一配置管理 节点1M数据
+            2 分组管理 path结构,类似文件目录系统
+            3 同一命名 sequential
+            4 同步 临时节点
+    特征/保障
+        顺序一致性: 客户端接收消息 事务是按顺序排列的
+        原子性: 更新(同步到其他节点, 最终一致性 一半成功)要么成功 要么失败
+        统一试图: 无论连哪个节点 看到的视图都一样
+        可靠性: 持久化 写日志
+        及时性: 最终一致性
+            若访问的从节点还没有同步完成,调用一个命令,去主节点同步(很短的时间就可完成)
+            然后发给调用者最新的(集群一致的)结果
+    实现: client
+        分布式锁: 临时节点
+            用session当做判断依据,挂了或执行完了删除session锁
+            父节点下可以有多把锁(-s)
+            队列式 事物的 锁
+        HA 选主
+
+    <h2 class="anchor">安装</h2>
+    官网wget下载 解压
+    添加到PATH --/zk/bin
+    zoo.cfg --默认启动加载配置文件
+        tickTime=2000 --心跳时间 确保从活着
+        initLimit=10 --心跳*10 初始化连接 超出时间丢弃节点
+        syncLimit=5 --心跳*5 主节点有同步等操作 超出时间认为有问题
+        dataDir= --持久化目录 /var/apache/zppkeeper
+            放一个文件 myid --内容为下四个节点中本机节点的号 例如 1
+        # 4个节点 靠人规划zookeeper集群
+        # =节点:若选为leader此端口起leader:没有leader,从这个端口通信 过半谦让选leader
+        server.1=node01:2888:3888
+        server.2=node02:2888:3888
+        server.3=node03:2888:3888
+        server.4=node04:2888:3888
+    启动 zkServer.sh help/start(后台)/start-foreground(前台)/...
+    集群配置
+        所有节点相同的配置文件 不同的myid
+
+    注意 在linux中 需要防火墙开启端口才能实现集群之间的相互通信
+
+    <h2 class="anchor">使用</h2>
+    二进制安全的
+    连接 zlCli.sh
+    创建节点
+        create /folder "" --不加数据不能创建节点
+        create -s /folder "" --多人创建同一节点会变成序列节点,可以规避被覆盖问题
+    获得节点数据 get -s /folder
+        cZxid = 0x200000002 --创建
+            顺序执行,leader单机维护递增器
+            0x 2(32位-开头0省略 leader纪元,第几个,重新选举会+1) 00000002(事务id号,同mZxid用一个顺序)
+        mZxid = 0x200000004 --修改
+            0x 2 00000004(事务id号)
+        pZxid = 0x200000004 --本节点下 创建最后一个子节点时的事务id号
+        ephemeralOwner = 0X0 --临时节点 sessionid
+            伴随session会话期 会话结束删除
+            如果服务端挂了 连其他服务端用同一sessionid仍可以连接并拿到数据
+            创建的时候会统一视图,消耗一个事务id同步sessionid
+            create -e /n01
+    事务id 是递增的 不可逆的
+
+    <h2 class="anchor">节点间的socket连接</h2>
+    每个节点之间都会建立一个socket连接,要么是被连接,要么是连接别人
+    2888 --leader接收写请求 同步数据
+    3888 --选主投票
+    netstat -natp | egrep '(2888|3888)'
+        tcp6 0 0 192.168.1.161:3888  :::*                LISTEN      2939/java
+        tcp6 0 0 192.168.1.161:3888  192.168.1.163:48270 ESTABLISHED 2939/java
+        tcp6 0 0 192.168.1.161:3888  192.168.1.162:34232 ESTABLISHED 2939/java
+        tcp6 0 0 192.168.1.161:52108 192.168.1.163:2888  ESTABLISHED 2939/java
+        tcp6 0 0 192.168.1.161:3888  192.168.1.164:43880 ESTABLISHED 2939/java
+        说明
+            1行 自己监听3888
+            2/3/5行 自己的3888被其他连接
+            4行 连接主节点
+
+    <h2 class="anchor">扩展性</h2>
+    框架 架构 → 角色
+        leader
+        follower
+        observer
+            中文: 观察者
+            配置: server.4=node04:2888:3888:observer
+    读写分离
+        observer放大查询能力
+        只有follower才能选举
+
+    <h2 class="anchor">可靠性</h2>
+    <red>攘其外必先安其内</red>
+    快速恢复leader
+    数据 可靠 可用 一致性
+        攘其外
+            一致性?
+            最终一致性
+            数据一致过程中节点是否对外提供服务
+        分布式
+            paxos协议
+            ZAB协议
+
+    <h2 class="anchor">paxos协议</h2>
+    文章
+        百度搜: paxos site:douban.com
+        https://www.douban.com/note/208430424/
+    基于消息传递的一致性算法
+    paxos前提: 计算环境 网络环境 可信 不会被入侵 破坏
+    协议内容:见文章
+
+    <h2 class="anchor">ZAB协议</h2>
+
+
+    <h2 class="anchor">watch 监控 观察</h2>
+    watch 节点 会注册一个回调事件
+    当节点发生 create change delete child 事件后
+    会回调注册的事件
+
+    <h2 class="anchor">API</h2>
+    callback 响应式编程
+    见 com.liuyao.demo.test.zookeeper.ZkApi.java
+
+    获得zk实例 new ZooKeeper()
+    创建节点 create()
+    修改节点 setData()
+    获得节点 getData()
+        参数：
+            path --节点名称
+            Watch：监控 是一次性的
+
+        byte[] getData() 同步
+        void getData() 异步的
+
+    <h2 class="anchor">配置中心</h2>
+    思路：修改(set) 会回调Watch
+
+    <h2 class="anchor">分布式锁</h2>
+    能够同时访问就能做
+    redis作为分布式锁问题
+        需要快速的特点 需要单点 且不能开启持久化
+        单点不做持久化的话 如果挂了 有可能有重复的锁 重复的人又同时干一件事了
+    使用zk
+        争抢锁 只能一个获得锁
+        获得锁的人 出问题,临时节点可规避这个问题
+        获得锁的人执行成功,释放锁
+        锁释放了 删除了,别人怎么知道?
+            主动轮询、心跳：等 弊端：心跳延迟 压力（见下行）
+            watch：解决延迟问题 弊端：锁释放了，但其他没获得锁的仍会同时访问，造成压力
+            sequence+watch：watch上一个，最小的获得锁，一旦最小的释放了，只给第二个发事件回调
+
+
+
+
+    <h2 class="anchor">...</h2>
+
+</pre>
+
+</body>
+</html>

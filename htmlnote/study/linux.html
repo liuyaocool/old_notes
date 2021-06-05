@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>基础控件</title>
+
+    <link rel="stylesheet" href="00-static/base.css">
+    <script src="00-static/base.js"></script>
+
+    <style>
+
+    </style>
+</head>
+<body>
+
+<pre>
+
+    <h2 class="anchor">MAC OS截屏</h2>
+    Shift+command+3 全屏幕截图
+    Shift+command+4 区域截图
+
+    <h2 class="anchor">安装说明</h2>
+    1 磁盘 sda sdb sdc
+    2 boot 引导程序区
+        系统启动
+    3 swap 交换区
+        内存 → 交换区中
+    4 用户区
+
+    <h2 class="anchor">远程连接</h2>
+    ssh连接
+        ssh username@ip
+    远程断连问题:
+        sudo vim /etc/ssh/ssh_config
+            ServerAliveInterval 50 #每隔50秒就向服务器发送一个请求
+            ServerAliveCountMax 3  #允许超时的次数，一般都会响应
+        sudo /etc/init.d/ssh restart
+    远程命令
+        ssh user@remoteNode "cd /home ; ls"
+            双引号，必须有。如果不加双引号，第二个ls命令在本地执行
+            分号，两个命令之间用分号隔开
+        对于脚本的方式：
+        　　有些远程执行的命令内容较多，单一命令无法完成，考虑脚本方式实现：
+            #!/bin/bash
+            ssh user@remoteNode > /dev/null 2>&1 << eeooff
+            cd /home
+            touch abcdefg.txt
+            exit    #在结束前，加exit退出远程节点
+            eeooff
+            echo done!
+            远程执行的内容在“<< eeooff ” 至“ eeooff ”之间，在远程机器上的操作就位于其中，注意的点：
+            << eeooff，ssh后直到遇到eeooff这样的内容结束，eeooff可以随便修改成其他形式。
+            重定向目的在于不显示远程的输出了
+
+    <h2 class="anchor">查看命令</h2>
+    lsof -i --
+    netstat -na --
+    iptables
+
+
+    <h2 class="anchor">文件操作</h2>
+    ./ 当前路径
+    / 根路径
+    ../ 上级路径
+
+    echo `dirname $0`
+        /Users/liuyao/Desktop/PROJECT/BrowserInWeb --mac
+        ./ --linux
+    echo $(cd `dirname $0`;pwd)
+        /Users/liuyao/Desktop/PROJECT/BrowserInWeb --mac/linux
+    mac中双击shell可执行程序
+        pwd = /Users/liuyao
+
+    单文件
+        上传: scp local_file linux_user@ip:linux_folder（/filename）
+        下载: scp linux_user@linux_ip:linux_file local_folder
+    多文件
+        上传: scp local_file1 local_file2 ... linux_user@ip:linux_folder
+    文件夹
+        上传: scp -v -r local_folder linux_user@ip:linux_folder
+        上传到相同目录下: scp -r ./folder/ root@ip:`pwd` // tab按键与esc按键之间那个
+        下载: scp -r linux_user@linux_ip:linux_folder local_folder
+
+    tar解压: tar xf ***.tar.gz
+
+    <h2 class="anchor">网络配置</h2>
+    一个网卡可以配置多个ip地址
+    lo网卡: ifconfig 中的 lo 本地环回网卡
+        linux内核中虚拟的一张 优先级高于物理网卡(如eth0)-就近原则
+        任何能匹配到此网卡(网关与运算)的包 都不会向计算机外部发 会直接返回应用层程序
+    修改hosts文件 → vi /etc/hosts
+
+
+    <h2 class="anchor">命令</h2>
+    鉴别内部命令 type 例如type cd
+        whereis cd
+        cat ifconfig
+        file ifconfig
+
+    内部 shell自带 builtin
+
+    外部 用户安装
+
+    命令执行流程
+        0 登录后所有命令由bash shell(程序 软件)执行
+        1 根据空格切割字符串,第一部分是命令,后边是参数
+        2 判断内部还是外部
+            外部,寻找可执行文件<red>(PATH环境变量中寻找)</red>,交给linux内核执行
+            内部,直接交给linux内核执行
+
+    man命令 查看外部命令的帮助文档
+    help 查看内部命令的帮助稳稳当文档
+
+    <h2 class="anchor">bash shell</h2>
+    https://www.jb51.net/article/160398.htm
+
+    a=1 --定义变量
+    ((a++)) --双小括号 算数计算
+    echo $a
+    arr=(1 2 3) --定义集合
+    echo ${arr[1]}
+    echo $$ -打印bash shell进程号
+    ps -ef --打印所有进程
+    ps -aux |head -1; ps -aux | grep xxx --筛选时保留列名
+    kill -9 --结束任务 -9（强制）
+    循环
+        for I in 1 2 3;do
+            //操作
+        done
+        for I in {1..100};do
+            //操作
+        done
+        for ((i=0;i<100;i++));do
+            //操作
+        done
+    ${} --变量替换 等同于 $
+        a=linux
+        echo $ab // 打印 空行
+        echo ${a}b //打印 linuxb
+        file=/dir1/dir2/dir3/my.file.txt
+        删除
+            #*字符 --删掉第一个字符及其前边
+                ${file#*/} → dir1/dir2/dir3/my.file.txt
+                ${file#*.} → file.txt
+            ##*字符 --删掉最后一个字符及其前边
+                ${file##*/} → my.file.txt
+                ${file##*.} → txt
+            %字符* --删掉最后一个字符及其后边
+                ${file%/*} → /dir1/dir2/dir3
+                ${file%.*} → /dir1/dir2/dir3/my.file
+            %%字符* --删掉第一个字符及其后边
+                ${file%%/*} → 空值
+                ${file%%.*} → /dir1/dir2/dir3/my
+            记忆方法（键盘位置 # $ %）：
+                #(去左边) $ %(去右边) --最小匹配
+                ##(去左边) $ %%(去右边) --最大匹配
+        截取 :开始下标:截取长度
+                ${file:0:5} → /dir1
+                ${file:5:5} → /dir2
+        替换 /目标/替换为 //目标/替换为
+            ${file/dir/path} → /path1/dir2/dir3/my.file.txt --首个替换
+            ${file//dir/path}  /path1/path2/path3/my.file.txt --全部替换
+        长度
+            ${#file} → 27
+    ``-（反引号）、$() --命令替换 命令结果赋值属性 两者效果相同
+        用来重组命令行，先完成引号里的命令，其结果替换引号外命令
+        比如
+            a=(`ps -aux | grep mongod`) 等同于 a=($(ps -aux | grep mongod`))
+        $()的弊端： 不是所有类unix系统都支持，但反引号肯定支持
+    {}
+
+    awk --打印筛选
+        语法： awk [选项]  '指令'  操作文件
+        https://blog.csdn.net/wdz306ling/article/details/80383824
+        例如：
+            awk '{{$1=""}{$7=""};print $0}' --1 7列设置为空 其他打印
+            awk '{ for(i=1; i<=3; i++){ $i="" }; print $0 }'  --1~3列置为空
+            awk '{print $1, "\t", $2}' --打印1 2列 中间带tab
+            awk 'NR==1{print $0}' --打印第一行
+            awk 'END{print NR}' --打印总行数
+    sed --行筛选
+        例如：
+            sed -n '/abc/,$p' --打印匹配abc的行到最后一行
+            sed -n '1,5p' --打印1~5行
+            sed -n '1,$p' --打印1~末行
+            sed -n '/‘$a'/,$p' --打印匹配a变量的行到最后一行
+
+    ()
+        命令组。括号中的命令将会新开一个子shell顺序执行，所以括号中的变量不能够被脚本余下的部分使用。括号中多个命令之间用分号隔开，最后一个命令可以没有分号，各命令和括号之间不必有空格。
+        命令替换。等同于`cmd`，shell扫描一遍命令行，发现了$(cmd)结构，便将$(cmd)中的cmd执行一次，得到其标准输出，再将此输出放到原来命令。有些shell不支持，如tcsh。
+        用于初始化数组。如：array=(a b c d)   【($str) 会把字符串按照  字段分隔符：空格、制表符、换行符   ，分割形成 数组】
+    (()) [] [[]] {}
+        https://www.jb51.net/article/123081.htm
+
+
+    hash优化命令查找
+        执行命令后 会将命令存到hash
+        执行hash命令查看
+
+    <h2 class="anchor">重定向 > >> >& <& < << </h2>
+    https://www.runoob.com/linux/linux-shell-io-redirections.html
+
+    文件描述符
+        0 标准输入(stdin)
+        1 标准输出(stdout)
+        2 标准错误(stderr)
+
+        1>/dev/null --标准输出指向空，即控制台无内容
+        2>/dev/null --标准错误指向空
+
+    echo "123" >> 文件名 --文件内容追加一行数据
+    echo "123" > 文件名 --文件内容替换为数据
+
+    >& -- >代表重定向 &代表指向文件描述符,不指向文件
+
+    socket连接示例
+        cd /proc/$$/fd
+            $$: 当前解释程序进程id号
+            fd: 文件描述符
+        exec 8<> /dev/tcp/www.baidu.com/80 --建立socket连接
+            <>: I/O 数入/输出
+            8<>: 8指向socket(套接字通信,内核中转换为套接字)
+        echo -e 'get / http/1.0\n' >& 8 --http协议输送到百度
+            >: 重定向输出
+            &: 代表8是文件描述符,不是文件
+            -e: \n 转化为换行符
+            ''之间: 最简单http协议
+        cat 0<& 8 --读取返回结果
+            标准输入0 来自文件描述符8
+            cat: 读文件,从标准输入读东西
+        exec 8<& - --关掉
+
+    <h2 class="anchor">子进程</h2>
+    /bin/bash --进入子进程
+    pstree --查看是否在子进程
+        |-sshd---sshd---sshd---bash---pstree
+        |-sshd---sshd---sshd---bash---bash---pstree
+    会触发创建【子进程】（bash shell为一个进程），echo $BASEPID($$), echo $BASEPID($$) | more
+    $$优先级高于管道， $xxx优先级低于管道
+    父子进程，子进程不能访问父进程数据，数据隔离 pstree
+    export xxx 添加环境变量，则子进程可以看到数据
+    环境变量 子进程修改不会破坏父进程，反过来一样
+    fork(2) --系统调用,快速创建一个子进程
+        进程之间是数据隔离的 利用copy on write内核机制
+        子进程与父进程中都只维护了指针(指向内存中的数据)
+        父子进程中 任一个 修改了 自己进程中的数据,会新创建一块内存空间,然后把指针指向新内存空间,另一个进程指针不变
+
+    <h2 class="anchor">管道 |</h2>
+    正则 egrep --xxxxx | egrep '正则'
+        例如 netstat -natp | egrep '(2888|3888)' --或者
+    管道会创建子进程
+    |前以输出流形式交给后边, |后以输入流形式接收 例如: cat aaa | head -2
+    若|后命令无法以输入流形式接收, 则需要使用xargs
+        xargs 创建并执行命令行从标准输入流
+        例如 echo "/" | xargs ls -l → ls -l /
+    例子
+        取第n行数据 head -n 文件名 | tail -1
+
+    <h2 class="anchor">文件系统</h2>
+    /boot
+    /bin 可执行文件,命令(用户)
+    /sbin 命令(管理)
+    /dev 设备文件
+        /dev/hda5 --磁盘
+            hd:IDE设备 (sd:SCSI设备)
+            a: 硬盘的顺序号(字母表示),表示第一块硬盘 b,第二块 ...
+            5: 分区顺序号(数字表示)
+    /home 用户家目录
+    /root 管理员家目录
+    /lib 库文件
+    /media 挂载点目录,移动设备
+    /mnt 挂载点目录,额外的临时文件系统
+    /opt 可选目录,第三方程序
+    /proc 伪文件系统,内核映射文件 → echo $$ --虚拟目录 开机之后才有
+        内核/进程中变量/参数抽象成文件 改文件值=改内存中参数的值 修改后即时生效
+        vi打开会产生隐藏的临时文件 约等于在地址空间产生一个新变量 内核有限制
+        只能用echo去重定向
+    /sys 伪文件系统,跟硬件设备相关的属性映射文件
+    /tmp 临时文件, /var/tmp
+    /var 可变化的文件
+
+    df -h --整体查看磁盘分区使用情况
+        tmpfs swap分区
+        /dev/sda1 boot分区
+
+    du -h(大小单位) --查看文件夹大小,文件夹使用情况
+        du /home/
+        -sh ./* --统计当前文件夹下所有
+
+    ls
+        -a 显示隐藏文件\文件夹
+        ll -h 显示转换后文件大小
+        -l → ll
+            -rwxr-xr-x. 1 root root     192840 Nov  9  2019  ***
+                -(开头): 文件
+                d(开头): 目录 例如: drwxr-xr-x.   2 root root    6 May 11  2019 media
+                l(开头): 软连接,相当于windows下快捷方式
+                b(开头): 块设备文件(block)
+                c(开头): 字符设备文件(character)
+                p(开头): 命令管道文件(pipe)
+                s(开头): 套接字文件(socket)
+                rwxr-xr-x(后9位): 权限 每3位一组
+                    rwx(前3位): 属主权限 r-read w-write x-执行
+                    r-x(中3位): 属主所在组的权限
+                    r-x(后3位): 其他人
+                .: 分割
+                1: 有几个硬连接
+                root(前一个): 属主名
+                root(后一个): 属主组名
+
+    mkdir -p adir/biir 创建多级路径
+    mkdir a/{h,i,j}dir
+    cp -r(目录)
+    rm -f 文件名 强制删除
+    rm -r -f 文件夹名 强制删除
+
+    ln aaa testaaa --硬连接
+        aaa与testaaa都指向底层文件
+            aaa → 底层文件
+            testaaa → 底层文件
+        修改任意一个,都可以修改到底层文件
+        删除任一个,另一个仍可以继续访问
+        ll -i → 4899(id号) -rwxr-xr-x. 2(硬连接数) root root 1035344 Nov 28 20:52 sshb
+    ln -s aaa testaaa --软连接
+        testaaa → aaa → 底层文件
+        ll -i → 4901 lrwxrwxrwx. 1 root root       3 Nov 28 20:53 ssha -> ssh
+
+    stat --查看文件更详细信息
+        stat ssh
+              File: ssh
+              Size: 1035344         Blocks: 2024       IO Block: 4096   regular file
+            Device: fd02h/64770d    Inode: 4899        Links: 2
+            Access: (0755/-rwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)
+            Context: unconfined_u:object_r:home_root_t:s0
+            Access: 2020-11-28 20:52:44.169162047 +0800 --访问时间
+            Modify: 2020-11-28 20:52:44.171162100 +0800 --修改内容时间
+            Change: 2020-11-28 20:54:32.124963794 +0800 --改变元数据(描述文件的数据:例如 权限,创建时间,位置...)
+             Birth: -
+    touch 文件名 --创建文件
+
+    cat 文件名 --全部打印
+    more 文件名 --分页
+        空格 下页
+        回车 下行
+    less 文件名 --翻页,文件内容放到内存,文件过大不合适
+        回车 下行
+        空格 下页
+        b 前页
+    head 文件名 -前10行
+        -5 前5行
+    tail 文件名 -后10行
+        -5 后5行
+        -f 输出增量数据,监控文件
+
+    copy on write --内核机制
+
+    echo "123" >> 文件名 --文件中加一行数据
+        echo -e "\t" a" "b
+
+    vi --文本编辑器
+        vi + xxx --定位到最后行
+        编辑模式
+            按hjkl --移动光标
+            按wbe --调到单词词首 词尾
+            按0 --行首
+            按ctrl + f b --翻页
+            按u --撤销
+            按ctrl+r --恢复撤销
+        末行模式 按esc :
+            set nu --显示行号
+            set nonu --隐藏行号
+            /after --再按n N 查找
+            ?afer --再按n N 查找
+            !ls /home --执行命令
+            0,$ --第0行到最后一行
+            n --行号
+            . --当前光标行
+            +n --偏移n行
+            $ --末尾行
+            % --全文
+            0,$d --全文删除
+            1,3d --删除前三行
+            $-1 --删除倒数第二行
+            1,3y --复制前三行
+            p --粘贴
+
+    cut --显示切割行数据
+    sort --排序
+    wc --统计 wordcount
+    sed --行编辑器
+
+    swk --文本分析工具
+
+    <h2 class="anchor">linux中正则</h2>
+    1 查找包含hello行: grep "hello" file
+    2 查找包含数字的行: grep "[0-9]" file
+    3 查找包含2或5的行: grep "[25]" file
+    4 查找至少包含3位数的行: --扩展正则表达式{}
+        grep "[0-9]\{3\}" file --不用-E 扩展需要添加转义字符
+        grep -E "[0-9]{3}" file
+    5 找出hello开头的行 grep "\&lt;hello" file
+    6 查找包含hello单词的行: grep "\&lt;hello\>" file
+    7 查找包含3位数字的行:
+        文本
+            1 x123 xx
+            2 x123456x xx
+            3 111 xxx xx 222
+            4 11 xxx xx
+        grep "[^0-9][0-9]\{3\}[^0-9]]" file
+            结果: 行 1
+            解释: 开头结尾非数字 三位数字
+        grep "\([^0-9][0-9]\|^[0-9]\)[0-9]\([0-9][^0-9]\|[0-9]$\)" file
+            结果: 行 1 3
+            解释:
+                第一位数字
+                    第一位前一位非数字 [^0-9]
+                    第一位 [0-9]
+                    或|
+                    数字开头 ^[0-9]
+                第二位数字
+                    [0-9]
+                第三位数字
+                    第三位 [0-9]
+                    后边非数字 [^0-9]
+                    或|
+                    数字结尾 [0-9]$
+                        错误示例: [0-9$] 会匹配出行2
+    8 找到出现2-3次l的行 grep "l\{2,3\}" file
+    9 找出 hi hello hi hello 的行
+        grep "hi.*hello.*hi.*hello" file
+        grep "\(hi.*\)\(hello.*\).*\1.*\2" file
+            解释: \1 \2 代表两个括号的内容
+        结果: hixhelloxhixhello
+
+    <h2 class="anchor">用户与权限</h2>
+    useradd username --创建用户
+    passwd username --设置密码
+    userdel username --删除用户
+        rm -rf cd /home/username
+        rm -rf cd /var/spoll/mail/username
+
+    groupadd groupname --创建组
+    groupdel groupname --删除组
+    usermod -G groupname username --用户进组
+    id username --查看用户信息
+
+    chown root:groupname sharefolder/ --文件夹(或文件 下同)设置为root属主 groupname属组
+    chown :groupname sharefolder/ --文件夹设置为groupname属组
+
+    chmod g+w sharefolder/ --文件夹属组g 添加+ 写w 权限
+    chmod u+x filename --文件属主u 添加+ 执行x 权限
+    chmod o-r sharefolder/ --文件夹非属组用户o 删除- 读r 权限
+    chmod o-x sharefolder/ --文件夹非属组用户o 删除- 执行x 权限
+
+    chmod 777 filename --文件所有用户都设置rwx权限
+        属主 属组  其他用户
+        rwx  rwx  rwx
+        111  111  111 --二进制
+        7    7    7   --十进制
+
+    属组用户需重新登录 重新加载权限配置文件缓存
+
+    su username --切换用户
+    sudo --获取root用户权限 需要root用户给权限
+
+    <h2 class="anchor">软件安装 yum配置 yum更新仓库</h2>
+    1 源码编译安装
+
+    2 rpm
+        rpm --软件管理体系 RedHat下的
+        rpm -qa --查看所有安装好的
+
+    3 yum --基于Rpm包管理
+        1 配置国内源/更新仓库 https://developer.aliyun.com/mirror/
+            备份原yum源配置文件 /etc/yum.repos.d/CentOS-Base.repo
+            找到linux对应版本 找到yum源对应命令 执行
+        2 yum clean all --清空本地yum缓存
+        3 yum makecache --将依赖缓存下载到本地
+        4 配置yum本地源
+            1 mount /dev/cdrom /mnt --将iso\dvd挂载到本地,虚拟机有个CD/DVD配置
+            2 修改配置文件 /etc/yum.repos.d/CentOS-Base.repo
+                [local]
+                name=local
+                baseurl=file:///mnt
+                gpgcheck=1
+                enabled=1
+            3 yum clean all --清空本地yum缓存
+            4 yum makecache -将依赖缓存下载到本地
+        5 yum repolist --打印yum信息等
+
+    <h2 class="anchor">脚本.sh</h2>
+    见notes中的linux.md
+
+    <h2 class="anchor">...</h2>
+
+</pre>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>笔记</title>
+
+    <link rel="stylesheet" href="00-static/base.css">
+    <style>
+
+    </style>
+
+    <script src="00-static/marked.min.js"></script>
+    <script src="../../static/js/jquery-1.12.2.min.js"></script>
+
+</head>
+<body>
+<div id="content"></div>
+<pre>
+
+    <h2 class="anchor">...</h2>
+
+</pre>
+
+<script type="text/javascript">
+    window.onload = function () {
+        $.get("./typora教程.md", function (res) {
+            $("#content").html(marked(res));
+        })
+    }
+
+</script>
+</body>
+</html>

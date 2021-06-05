@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <script src="../../static/js/jquery-1.12.2.min.js"></script>
+    <script>
+        var instruction = "zhuolu777";
+        var keyDownStr = "";
+        //页面初始化
+        document.onkeydown = function(ev) {
+            keyDownStr += ev.key;
+            if (keyDownStr == instruction){
+                $("div").show();
+            }else if (instruction.indexOf(keyDownStr) < 0) {
+                keyDownStr = ev.key;
+            } else {}
+        };
+    </script>
+</head>
+<body>
+<div style="display: none;">
+    隐藏功能触发
+</div>
+
+</body>
+</html>

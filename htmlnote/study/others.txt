@@ -1,0 +1,13 @@
+book
+    ▪ 数据结构与算法： -- 毕生的学习 leetCode
+        –《Java数据结构与算法》《算法》
+        –《算法导论》《计算机程序设计艺术》//难
+    ▪《深入理解计算机系统》
+    ▪语言：C JAVA  K&R《C程序设计语言》《C Primer Plus》
+    ▪操作系统：Linux内核源码解析  Linux内核设计与实现 30天自制操作系统
+    ▪网络：机工《TCP/IP详解》卷一 翻译一般
+    ▪编译原理：机工 龙书 《编译原理》 《编程语言实现模式》马语
+    ▪数据库：SQLite源码 Derby - JDK自带数据库
+
+idea插件
+    jclasslib Bytecode viewer

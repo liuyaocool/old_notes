@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Title</title>
+
+    <style>
+
+    </style>
+
+</head>
+<body>
+
+<input type="button" onclick="ajaxCross()" value="ajaxCross">
+
+<h2>Http请求的过程与原理</h2>
+
+<pre>
+    <img src="img01.png">
+    首先作为发送端的客户端在应用层（HTTP协议）发出一个想看某个web也页面的HTTP请求。
+    接着，为了传输方便，在传输层（TCP协议）把从应用层处收到的数据（HTTP请求报文）进行分割，
+并在各个报文上打上标记序号及端口号后转发给网络层。
+    在网络层（IP协议），增加作为通信目的地的MAC地址后转发给链路层。这样一来，发往网络的通信
+请求就准备齐全了。
+    接收端的服务器在链路层接收到数据，按序往上层发送，一直到应用层。当传输层到应用层才能算真
+正接收到由客户端发送来的HTTP请求。注：   
+
+    1. IP协议----负责传输
+    <img src="img02.png">
+
+    2.TCP协议 ---- 确保可靠性（三次握手，四次挥手）
+    <img src="img03.png">
+
+    3.DNS服务 ---- 负责域名解析
+    <img src="img04.png">
+
+    4.各种协议与HTTP协议之间的关系
+    <img src="img05.png">
+</pre>
+<span>========================================================================</span>
+
+<pre>
+    TCP/IP通信协议
+
+    GET: 使用GET提交数据可能会造成Cross-site request forgery攻击
+
+    HTTP工作原理
+        HTTP协议定义Web客户端如何从Web服务器请求Web页面，以及服务器如何把Web页面传送给客户端。HTTP协议采用了请求/响应模型。客户
+    端向服务器发送一个请求报文，请求报文包含请求的方法、URL、协议版本、请求头部和请求数据。服务器以一个状态行作为响应，响应的内容包
+    括协议的版本、成功或者错误代码、服务器信息、响应头部和响应数据。
+
+    以下是 HTTP 请求/响应的步骤：
+
+        1、客户端连接到Web服务器
+        一个HTTP客户端，通常是浏览器，与Web服务器的HTTP端口（默认为80）建立一个TCP套接字连接。例如，http://www.oakcms.cn。
+
+        2、发送HTTP请求
+        通过TCP套接字，客户端向Web服务器发送一个文本的请求报文，一个请求报文由请求行、请求头部、空行和请求数据4部分组成。
+
+        3、服务器接受请求并返回HTTP响应
+        Web服务器解析请求，定位请求资源。服务器将资源复本写到TCP套接字，由客户端读取。一个响应由状态行、响应头部、空行和
+    响应数据4部分组成。
+
+        4、释放连接TCP连接
+        若connection 模式为close，则服务器主动关闭TCP连接，客户端被动关闭连接，释放TCP连接;若connection 模式为keepalive，
+    则该连接会保持一段时间，在该时间内可以继续接收请求;
+
+        5、客户端浏览器解析HTML内容
+        客户端浏览器首先解析状态行，查看表明请求是否成功的状态代码。然后解析每一个响应头，响应头告知以下为若干字节的HTML
+    文档和文档的字符集。客户端浏览器读取响应数据HTML，根据HTML的语法对其进行格式化，并在浏览器窗口中显示。
+
+        例如：在浏览器地址栏键入URL，按下回车之后会经历以下流程：
+
+        1、浏览器向 DNS 服务器请求解析该 URL 中的域名所对应的 IP 地址;
+
+        2、解析出 IP 地址后，根据该 IP 地址和默认端口 80，和服务器建立TCP连接;
+
+        3、浏览器发出读取文件(URL 中域名后面部分对应的文件)的HTTP 请求，该请求报文作为 TCP 三次握手的第三个报文的数据发
+    送给服务器;
+
+        4、服务器对浏览器请求作出响应，并把对应的 html 文本发送给浏览器;
+
+        5、释放 TCP连接;
+
+        6、浏览器将该 html 文本并显示内容; 　　
+
+    Http get,post,soap协议都是在http上运行的
+
+        （1）get：请求参数是作为一个key/value对的序列（查询字符串）附加到URL上的
+        查询字符串的长度受到web浏览器和web服务器的限制（如IE最多支持2048个字符），不适合传输大型数据集同时，它很不安全
+
+        （2）post：请求参数是在http标题的一个不同部分（名为entity body）传输的，这一部分用来传输表单信息，因此必须将
+    Content-type设置为:application/x-www-form- urlencoded。post设计用来支持web窗体上的用户字段，其参数也是作为key/value
+    对传输。
+        但是：它不支持复杂数据类型，因为post没有定义传输数据结构的语义和规则。
+
+        （3）soap：是http post的一个专用版本，遵循一种特殊的xml消息格式
+        Content-type设置为: text/xml 任何数据都可以xml化。
+
+        Http协议定义了很多与服务器交互的方法，最基本的有4种，分别是GET,POST,PUT,DELETE. 一个URL地址用于描述一个网络上的
+    资源，而HTTP中的GET, POST, PUT, DELETE就对应着对这个资源的查，改，增，删4个操作。 我们最常见的就是GET和POST了。GET一
+    般用于获取/查询资源信息，而POST一般用于更新资源信息.
+
+    GET方式需要使用Request.QueryString来取得变量的值，而POST方式通过Request.Form来获取变量的值。
+
+
+CORS跨域
+
+    名词解释：跨域资源共享（Cross-Origin Resource Sharing）
+    概念：是一种跨域机制、规范、标准，怎么叫都一样，但是这套标准是针对服务端的，而浏览器端只要支持HTML5即可。
+    作用：可以让服务端决定哪些请求源可以进来拿数据，所以服务端起主导作用（所以出了事找后台程序猿，无关前端^ ^）
+
+        要实现CORS跨域其实非常简单，说白了就是在服务端设置一系列的HTTP头，主要分为请求头和响应头，在请求和响应时加上这些HTTP头即可轻松实现CORS
+    请求头和响应头信息都是在服务端设置好的，一般在Filter阶段设置，浏览器端不用关心，唯一要设置的地方就是：跨域时是否要携带cookie
+    HTTP请求头：
+
+     #请求域
+     2Origin: ”http://localhost:8000“
+     3#这两个属性只出现在预检请求中，即OPTIONS请求
+     4Access-Control-Request-Method: ”POST“
+     5Access-Control-Request-Headers: ”content-type“
+
+    HTTP响应头：
+
+     #允许向该服务器提交请求的URI，*表示全部允许，在SpringMVC中，如果设成*，会自动转成当前请求头中的Origin
+     Access-Control-Allow-Origin: ”http://localhost:8000“
+     #允许访问的头信息
+     Access-Control-Expose-Headers: "Set-Cookie"
+     #预检请求的缓存时间（秒），即在这个时间段里，对于相同的跨域请求不会再预检了
+     Access-Control-Max-Age: ”1800”
+     #允许Cookie跨域，在做登录校验的时候有用
+     Access-Control-Allow-Credentials: “true”
+     #允许提交请求的方法，*表示全部允许
+     Access-Control-Allow-Methods:GET,POST,PUT,DELETE,PATCH
+
+    初始项目准备
+
+        补充一下，对于简单跨域和非简单跨域，可以这么理解：简单跨域就是GET，HEAD和POST请求，但是POST请求的"Content-Type"只能
+    是application/x-www-form-urlencoded, multipart/form-data 或 text/plain反之，就是非简单跨域，此跨域有一个预检机制，
+    说直白点，就是会发两次请求，一次OPTIONS请求，一次真正的请求
+
+    SpringMVC项目配置支持CORS解决方案：
+
+    1.pom.xml配置：
+
+     1<!-- https://mvnrepository.com/artifact/com.thetransactioncompany/cors-filter -->
+     2          <dependency>
+     3              <groupId>com.thetransactioncompany</groupId>
+     4              <artifactId>cors-filter</artifactId>
+     5              <version>2.6</version>
+     6          </dependency>
+     7          <!-- https://mvnrepository.com/artifact/com.thetransactioncompany/java-property-utils -->
+     8          <dependency>
+     9              <groupId>com.thetransactioncompany</groupId>
+    10              <artifactId>java-property-utils</artifactId>
+    11              <version>1.13</version>
+    12          </dependency>
+    2.web.xml中配置filter，如果项目中使用了多个filter,注意这个filter的配置位置 最好放在 其他filter前面。
+
+     1<!--CORS 跨域资源访问-->
+     2   <filter>
+     3       <filter-name>CORS</filter-name>
+     4       <filter-class>com.thetransactioncompany.cors.CORSFilter</filter-class>
+     5       <init-param>
+     6           <param-name>cors.allowGenericHttpRequests</param-name>
+     7           <param-value>true</param-value>
+     8       </init-param>
+     9       <init-param>
+    10           <param-name>cors.allowOrigin</param-name>
+    11           <param-value>*</param-value>
+    12       </init-param>
+    13       <init-param>
+    14           <param-name>cors.allowSubdomains</param-name>
+    15           <param-value>false</param-value>
+    16       </init-param>
+    17       <init-param>
+    18           <param-name>cors.supportedMethods</param-name>
+    19           <param-value>GET, HEAD, POST, OPTIONS</param-value>
+    20       </init-param>
+    21       <init-param>
+    22           <param-name>cors.supportedHeaders</param-name>
+    23           <param-value>*</param-value>
+    24       </init-param>
+    25       <init-param>
+    26           <param-name>cors.exposedHeaders</param-name>
+    27           <param-value>Test-1, Test-2</param-value>
+    28       </init-param>
+    29       <init-param>
+    30           <param-name>cors.supportsCredentials</param-name>
+    31           <param-value>true</param-value>
+    32       </init-param>
+    33       <init-param>
+    34           <param-name>cors.maxAge</param-name>
+    35           <param-value>3600</param-value>
+    36       </init-param>
+    37   </filter>
+    38   <filter-mapping>
+    39       <filter-name>CORS</filter-name>
+    40       <url-pattern>/*</url-pattern>
+    41   </filter-mapping>
+    42  <filter>
+    3.在DispatcherServlet中增加dispatchOptionsRequest配置，相当于支持options访问的支持。
+
+     1  <servlet>
+     2    <servlet-name>springmvc</servlet-name>
+     3    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+     4    <init-param>
+     5      <param-name>contextConfigLocation</param-name>
+     6      <param-value>classpath:springmvc-servlet.xml</param-value>
+     7    </init-param>
+     8    <init-param>
+     9          <param-name>dispatchOptionsRequest</param-name>
+    10          <param-value>true</param-value>
+    11     </init-param>
+    12    <load-on-startup>1</load-on-startup>
+    13  </servlet>
+    以上配置即可实现SpringMVC支持CORS协议，
+
+    注意点：SpringMVC为了安全默认是不开启CORS的，所以，当你的程序开启了支持CORS协议，您的程序最好需要经过安全的评估才可在生产环境下使用。
+
+</pre>
+
+<script src="../../static/js/jquery-1.12.2.min.js"></script>
+<script type="text/javascript">
+
+    $(function () {
+        var aa = ["aa","bb","cc"];
+        // aa.clear();//没有
+        console.log(aa);
+
+    })
+
+    //ajax跨域
+    function ajaxCross() {
+
+        $.ajax('http://172.23.125.250:8980/common/testIp', {
+            dataType: 'jsonp',
+            jsonp:'callback',
+            jsonpCallback:"successCallback",
+            crossDomain: true,
+            success: function (data) {
+                if(data.data==1){
+                }else{
+                }
+            },
+            //打印失败问题
+            error: function (XMLHttpReuqest, textStautus, errothrown) {
+                console.log(XMLHttpRequest.status);
+                console.log(XMLHttpReuqest.readyState);
+                console.log(XMLHttpRequest.responseText);
+                console.log(textStautus);
+                console.log(errothrown);
+            }
+        });
+
+    }
+
+    //非简单请求
+    function hardRequest() {
+        var url = 'http://api.alice.com/cors';
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', url, true);
+        xhr.setRequestHeader('X-Custom-Header', 'value');
+        xhr.send();
+
+    }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>redis</title>
+
+    <link rel="stylesheet" href="../00-static/base.css">
+    <style>
+
+    </style>
+
+    <script src="../00-static/base.js"></script>
+
+</head>
+<body>
+
+<pre>
+
+    <h2 class="anchor">系统I/O</h2>
+    bio
+    nio
+    aio --windows
+
+    1:单进程 单线程 单实例 epoll
+    epol:
+    select
+    epoll
+
+    <h2 class="anchor">原理</h2>
+    使用epoll 等
+
+
+    <h2 class="anchor">redis基本</h2>
+    0 正负索引 二进制安全 kv都是存的二进制
+    1 连接
+        redis-cli --客户端连接，只识别ascll码，超出显示hex
+            --raw --从当前字符集中进行格式化，获得对应字
+        select 7 --选择7号库进行操作
+    2 通用
+        object encoding k --查看类型
+        keys k* --查询key为k*的值 *-通配符
+        help @type --查看值类型的api文档
+        help method --查看方法的api文档
+        flushdb --清空
+
+    <h2 class="anchor">redis的value类型</h2>
+    1 String byte
+        字符串
+            set k v --新加或修改
+                set k v nx --不存在新加返回成功,存在设置失败返回失败
+                set k v xx --修改
+            append --追加
+            getrange --截取
+        数值
+            incr --自增
+        二进制
+            setbit --offset 为二进制偏移量
+            bitpos
+            bitcount
+            bitop
+    2 list --l开头
+        栈 队列
+            左 lpop lpush 右 rpop rpush
+        数组
+            lrange --查看元素
+            lindex --通过下标取
+            lset --通过下标设置值
+        lrem --移除
+        linsert --插入
+        b开头 --阻塞 单播队列 fifo
+            blpop brpop ...
+        ltrim --删除两端
+    3 hash --h开头 类似HashMap
+        hset/hget --单个操作
+        hmset/hmget --多个操作
+        hkeys/hvals/hgetall
+        hincrbyfloat --增加浮点型
+    4 set --无序 去重
+        smembers --消耗网卡I/O,必须要用则独立服务器
+        sadd/srem k v v2 v3 ... --添加/移除 自动去重
+        sinter/sunion k1 k2 ... --交集/并集
+        sinterstore/sunionstore dest k1 k2 ... --交集/并集 存到dest
+        sdiff k1 k2 ... --差集 k1去掉k2的值
+        srandmember k 5 --随机
+            正数 随机取几个,不超过set中现有的数量
+            负数 取带重复的,满足需要的数量
+        spop --弹出一个
+    5 sorted_set --z开头,s被占用了,所以使用z 元素排序
+        物理内存左小右大,不随命令变化
+        zrev*** --倒叙
+        z*** --正序
+        zadd --添加 分值 会按照分值排序
+        zrange k 0 -1 withscores --取出所有
+        zrangebyscore --取出按照分值所有
+        zscore --取分值 多少分
+        zrank --取排名 第几
+        zincrby --增加分值 并重排序
+        zunionstore --交集 涉及到分值的处理
+            ZUNIONSTORE destination numkeys key [key ...] [WEIGHTS weight] [AGGREGATE SUM|MIN|MAX]
+            例 zunionstore destk 2 k1 k2 weights 1 0.8
+                zunionstore destk 2 k1 k2 AGGREGATE max
+            numkeys --[keys ...]中有几个key
+            weights --权重 分数乘以权重再进行操作
+        排序是如何实现的
+            skip list --跳表-分层链表,类平衡树(?)
+                插入的时候 随机造层(?)
+
+
+    <h2 class="anchor">管道</h2>
+    nc ip port --连接socket
+        yum install nc
+    echo -e "set k2 99 \n incr k2 2 \n get k2" | nc 127.0.0.1 6379
+        让通信成本变低
+        -e 识别换行符
+
+    <h2 class="anchor">发布订阅</h2>
+    help @pubsub
+
+    适用场景:
+        实时聊天 -发布订阅
+        三天聊天记录 -sorted_set
+        历史记录 -关系库
+
+    <h2 class="anchor">事务</h2>
+    说明,若多个客户端同时开启事务,哪个客户端的exec指令先到达,则谁先执行
+    mutli --开启事务
+    exec --提交
+    watch --监控k,在开启事务之前
+
+    <h2 class="anchor">扩展模块</h2>
+    https://redis.io/ 顶部有个modules 扩展块
+    redis bloom 过滤器
+        加载扩展模块
+            点小房子 下载源码
+            执行make命令-Makefile → .so文件(linux扩展库)
+            .so拷贝到redis6目录下,与bin并列
+            手动启动 加载扩展库
+                redis-server --loadmodule /opt/soft/redis6/xxx.so /etc/redis/6379.conf
+        使用 缓存穿透 小空间解决大量数据匹配
+            bf.add k v1 v2 ...
+            bf.exist k v2
+            cf.add
+            数据库的操作 需要对bloom进行维护
+    counting bloom 过滤器
+    cukcoo 过滤器
+
+    <h2 class="anchor">作为缓存与数据库的区别</h2>
+    配置文件可以导入 其他配置文件 导入模块
+
+    缓存 --数据可以丢 急速
+        不是全量数据
+        应该随着访问变化
+        热数据
+        数据如何随业务变化
+            只保留热数据，因为内存有限
+            业务逻辑 key的有效期
+        内存管理
+            key的有效期 --不会随使用延长
+                set k v ex 20
+                ttl k --查看过期时间
+                expire k 50 --定时 设置过期时间
+                expireeat k 50 --设置到哪个时刻过期 且不能延长
+                重新写这个k 会去掉过期时间
+                过期由业务逻辑补全
+                原理： 被动访问判定 主动周期轮询，稍微牺牲内存 保证性能
+
+            maxmemory
+                LFU 多久没用
+                LRU 用了多少次
+            maxmemory-policy
+
+    相关知识点
+        管道 子进程 见linux.html:管道
+        存储层：
+            1：快照/副本 RDB 时点性
+                创建子进程进行备份写磁盘数据库: 两个成本 速度、空间
+                fork(2): 创建子进程 速度快、空间小, 进程之间数据隔离的
+            2：日志 AOF
+    数据库 --数据不能丢 速度+持久性 掉电易失
+        RDB持久化 --磁盘
+            save --手动触发 阻塞
+                明确：例如关机
+            bgsave --后端异步 非阻塞
+                利用fork(2)系统调用,创建时点子进程,可保障子进程的数据是创建时刻的数据,
+                即使父进程(原redis进程)修改了数据,子进程也不会变化
+            配置文件 bgsave规则 用save标识
+                vi /etc/redis/6379.conf --SNAPSHOTTING
+                    save 900 1
+                    save 300 10
+                    save 60 10000 --60s或10000条
+                    dbfilename dump.rdb
+                    dir /var/lib/redis/6379
+            弊端
+                不支持拉链 只有一个dump.rdb
+                丢数据相对多一些 时点之间数据容易丢失 比如：8点落数据，9点刚要落，死机了
+            优点 类似java中的序列化，速度快
+        AOF --redis中的写操作记录到文件中
+            配置文件 6379.conf --APPEND ONLY MODE
+                appendonly yes --开启AOF
+                appendfilename "appendonly.aof" --RDB dir目录
+                appendfsync everysec/always/no --级别 每秒（默认）/每笔立刻写磁盘（顶多丢一条）-最慢/buffer满了再写（丢一整个buffer）-最快
+                aof-use-rdb-preamble yes --4.0之后 混合模式开启
+                auto-aof-rewrite-percentage 100  --自动重写 上次执行完 新数据够64mb*100%后 自动执行
+                auto-aof-rewrite-min-size 64mb  --自动重写 批次大小
+
+            优点
+                丢数据少 --保存写操作的命令，恢复的时候重新执行
+                RDB、AOF同时开启，若开启了AOF，只会从AOF恢复
+                    4.0以后 AOF中包含RDB全量，增量 记录新的写操作
+            弊端 文件无限变大 恢复慢
+            优化弊端
+                hdfs，fsimage（镜像）+edits.log 让日志只记录增量 合并的过程
+                4.0以前 → bgsave（RBD持久化） → 重写（bgreweiteaof） → 删除抵消的命令，合并重复的命令 → 一个纯指令的日志文件
+                4.0以后 → bgsave（RBD持久化） → 重写（bgreweiteaof） → 将老的数据RBD到AOF文件中，将增量以指令的方式append到AOF → AOF=RDB+增量指令
+            原点：redis是内存数据库 写操作会触发I/O
+
+    <h2 class="anchor">集群</h2>
+    单机问题：单点故障 容量有限 压力
+    AKF划分：一变多
+        x：全量 镜像 --解决压力
+            数据一致性问题
+                1 强一致性 所有节点阻塞直到数据全部一致 同步方式
+                    master →（同步） 备1
+                    master →（同步） 备2
+                    破环可用性（一台服务器慢） 为什么一变多→解决可用性
+                2 弱一致性 容忍数据部分丢失 异步方式
+                    master →（异步） 备*
+                3 最终一致性 通过中间件（例kafka集群）
+                    master → kafka → 备*
+                    有可能取到不一致的数据
+        y：业务 逻辑 拆分 --解决容量
+        z: 优先级 逻辑 再拆分
+     集群模式
+        主从复制：client都能访问
+        主备复制：client只能访问主，主挂掉，备接替主
+    集群问题 CAP原则（一致性 可用性 分区容错性）
+        主（关键点）：全量crud
+        对主做高可用（HA：High Availability）
+        自动故障转移 --代替人监控
+            ↓
+        由程序实现，仍会有单点故障问题
+            ↓
+        有一些不一样的地方
+
+            redis                        redis
+         ↑    ↑     ↑        →        ↓    ↓    ↓
+        监控  监控  监控               监控  监控  监控
+
+        网络分区（脑裂） 访问同一个服务 不同节点数据不一样
+
+    <h2 class="anchor">集群配置</h2>
+    主节点通过RDB给从数据
+    从节点数据清空
+    从节点挂掉重启之后
+        开启aof 不动RDB，没有rdb的replicaid
+        不开启aof rdb中有一个master的replicaid
+
+    客户端命令 从节点追随主节点
+        主节点中通过sub/pub（发布/订阅）有从而节点信息
+        slaveof --5.0之前
+        replicaof --5.0之后
+        replicaof no one --取消追随主节点
+    配置文件
+        replicaof *** ***
+        replica-serve-stale-data yes -- 老数据可以查（yes）、必须同步完数据才能查（no）
+            从 追随 主，会先清空本地，然后load新数据到内存
+            此过程会有个n秒，此过程是否可查，此配置决定
+        replica-read-only yes --从节点是否只读
+        repl-diskless-sync no --直接使用网络传（yes）、落磁盘（RDB）再传（no）
+        repl-backlog-size 1mb --增量复制
+            从节点追随主节点那一时刻，主节点会落RDB、并维护新消息的队列（大小即此配置），
+            主节点 然后发RDB、offset（此时刻消息队列的偏移量）给从节点
+            若从节点load RDB到内存的过程中挂了，但主节点一直有新数据
+            从节点重启后，会先load RDB到内存，然后通过offset去主节点的队列拿新数据
+            若offset在此配置范围内，则加载
+            若不在此配置范围内，则重新从主节点获取RDB，然后load到内存
+        min-replicas-to-write 3 --规定最少几个副本写成功
+        min-replicas-max-lag 10 --规定最多几个副本写成功
+    问题 需要人工维护主的故障问题
+
+    <h2 class="anchor">哨兵-Sentinel</h2>
+    文档 http://redis.cn/topics/sentinel.html
+    监控 提醒 自动故障转移
+
+    配置文件
+        源码目录/sentinel.conf
+        需要启动多个 则需要多个配置文件
+        26380.conf
+            port 26380
+            sentinel monitor mymaster 127.0.0.1 6379 2
+                2 哨兵进程投票重新选举主节点
+    启动哨兵
+        源码目录/src/redis-sentinel
+        安装目录下（redis-server）没有sendtinel，可以做一个软连接
+        启动命令：
+            redis-server /***/26380.conf --sentinel
+            redis-sentinel /***/26380.conf
+
+    哨兵之间是通过redis的发布/订阅来发现其他哨兵，并互通消息
+
+    哨兵重新选举主节点后会修改哨兵的配置文件（26380.conf）
+
+    <h2 class="anchor">容量问题</h2>
+    槽位(slots) 共16000+
+    n套主从分治 会分开 差不多每套会分16000/n个
+    集群添加数据 k要通过一定算法得出槽位号 放到对应那套主从中
+
+    <h2 class="anchor">twemproxy代理搭建</h2>
+    安装
+        github clone源码 到redis通用目录
+            https://github.com/twitter/twemproxy
+            clone 报错: yum update nss
+        make
+            注意这一行: autoreconf -fvi && ./configure needs automake and libtool to be installed
+            autoreconf → autoconf
+            autoreconf 版本低 去配置epel仓库 见 linux yum配置
+            按照readme.md执行
+        nutcracker.init --scripts目录
+            拷贝到 /etc/init.d/twemproxy
+            加权限 chmod +x twemproxy
+            vi 修改一些参数
+                options 参数路径下缺少配置文件(yml),去源码conf中找,并拷贝所有配置到此路径
+                prog 执行程序(会去PATH中去找) 需要到源码src目录下 把此可执行程序拷贝到任意一个path下 推荐/usr/bin
+            yml文件修改 见readme.md
+        启动 service twemproxy start
+        连接 redis-cli --port 22121(yml文件中配置的代理端口)
+
+    <h2 class="anchor">joyieldInc/predixy代理搭建</h2>
+    下载
+        编译好的: github → Releases → predixy-1.0.5-bin-amd64-linux.tar.gz
+        或者 c++版本足够高可以自己按照readme.md 下载源码编译
+        推荐放到redis安装目录,我的是/opt/soft/redis6
+    安装
+        tar xf 解压
+        bin/ 一个程序
+        prdixy.conf
+            SentinelServerPool {
+                Databases 16
+                Hash crc16
+                HashTag "{}"
+                Distribution modula
+                MasterReadPriority 60
+                StaticSlaveReadPriority 50
+                DynamicSlaveReadPriority 50
+                RefreshInterval 1
+                ServerTimeout 1
+                ServerFailureLimit 10
+                ServerRetryTimeout 1
+                KeepAlive 120
+                Sentinels {
+                    + 10.2.2.2:7500 //监听多个哨兵 每个哨兵中有一套主从
+                    + 10.2.2.3:7500
+                    + 10.2.2.4:7500
+                }
+                Group xxoo { // 名字对应 sentinel monitor xxoo ***
+                }
+                Group shard002 {
+                }
+            }
+
+    <h2 class="anchor">redis自带cluster</h2>
+    脚本路径 /utils/create-cluster/
+    脚本 create-cluster
+        NODES=6 --几个实例
+        REPLICAS=1 --每个主从中几个副本
+            这里6/ (1(主) + 1(这里配置的副本数)) = 3套主从
+    启动
+        使用脚本 --只能用于单机演示, 或修改脚本可启动分布式
+            ./create-cluster start --启动n(这里6)个实例
+            ./create-cluster create --n(这里3)套主从分赃(分赃:数据通过算法分到哪套主从)
+        人工 --启动分布式
+            cluster-enabled yes --开启集群方式,默认不开启
+            redis-cli --cluster help
+            redis-cli --cluster create 127.0.0.1:30001 127.0.0.1:30001 127.0.0.1:30001 127.0.0.1:30001 127.0.0.1:30001 127.0.0.1:30001 --cluster-replicas 1
+    连接
+        错误: redis-cli -p ****
+            如果k通过算法得出的槽位 没有在此套主从 报错 不成功 并提示正确该连哪套
+        正确: redis-cli -c -p ****
+            k通过算法得出的槽位 没有在此套主从 会先跳到正确的那套 然后再成功设值
+    事务 --只能在同一套主从上, 因解决容量而分治的不同集群之间 不能使用
+        k1-A主从 k2-B主从
+        1) watch k1 (A) → multi (A) → set k2 (跳B) → EXEC (此处在B上,而事务在A上) → 报错
+        2) watch {oo}k1 (A) → multi (A) → set {oo}k2 (A) → EXEC (A) → 成功
+            人为 特设k 则可使用事务
+    数据迁移, 加节点 崩节点
+        redis-cli --cluster reshard
+        然后输入槽位数 例如2000
+        输入给谁 id 输入此命令后会打印id和此id有的槽位
+        输入从哪拿
+            可以输入多个 输入第一个(#1)回车可继续输入下一个(...#n), 输入done 结束
+            或输入all 从所有节点拿(均分2000)
+    查看信息
+        redis-cli --cluster info 127.0.0.1:30001
+        redis-cli --cluster check 127.0.0.1:30001
+
+    <h2 class="anchor">击穿 穿透 雪崩 --做缓存</h2>
+    击穿 大量并发发生 key失效 大量并发到db
+        只允许第一个重新加载 使用两个线程 一个访问库 一个监控redis,并更新锁超时时间
+    穿透 查询是系统不存在的 布隆过滤器
+    雪崩 大量key 同时失效
+        时点性无关 随机过期时间
+        零点失效 业务层延时
+
+    <h2 class="anchor">分布式锁</h2>
+    set nx
+    过期时间
+    多线程(守护线程)延长过期
+
+    <h2 class="anchor">api</h2>
+    jedis --github 看readme.md 线程不安全
+    lettuce --github 看readme.md 线程安全
+    spring data --spring官网找spring data redis
+
+    springboot --spring官网找springboot
+        RedisTemplate 序列化是使用java方式 所以key是乱码
+        RedisTemplate.getConnectionFactory().getConnectino() 低阶api 可以使用redis原子操作
+        StringRedisTemplate
+            setKeySer
+            setValueSer
+
+
+
+    <h2 class="anchor">...</h2>
+
+</pre>
+
+</body>
+</html>

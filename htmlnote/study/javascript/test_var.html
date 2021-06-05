@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Title</title>
+
+    <style>
+
+    </style>
+
+</head>
+<body>
+
+<input type="button" onclick="aa()" value="aaa">
+<input type="button" onclick="testEval()" value="eval">
+<input type="button" onclick="forin()" value="forin">
+
+
+<script src="../../static/js/jquery-1.12.2.min.js"></script>
+<script type="text/javascript">
+
+    var aaa = "aaa";//不可删除的额全局变量
+    bbb = 2;//去创建一个全局对象的可删除的属性
+    this.ccc = 3;//同上
+    function aa() {
+        console.log(aaa);
+        /**
+         * 1：遮盖了全局变量
+         * 2：第一个弹出undefined是因为变量声明会提前至函数顶部
+         * 3：尽量把函数声明放在函数顶部
+         */
+        var aaa = "aab";//
+        console.log(aaa);
+        console.log(this.ccc);//this关键字可引用全局对象
+        console.log("" == 0);
+        console.log("" === 0);
+        var ly;
+        console.log((ly = 3) == "3");
+    }
+
+    function testEval() {
+
+        //若在顶层代码中调用，则会作用于全局变脸和全局函数
+        eval("var ly = 3");
+        console.log(ly);
+        eval("function tevl() {alert('aaa'); }");
+        tevl();
+    }
+
+    function forin() {
+        var aa = {x:1,y:2,z:3};
+        var bb = [],i=0;
+        console.log(bb.length);
+
+        for (bb[i++] in aa);//将对象key枚举到数组中
+        for (j in bb) console.log(j);
+
+        console.log(bb[0]);
+        console.log(bb[1]);
+        console.log(bb[2]);
+    }
+
+    //跳转语句
+    function judgeState() {
+
+    }
+
+    var i = 0;
+    mainloop: while (true){
+        if (i > 10){
+
+        }
+        i++;
+    }
+</script>
+</body>
+</html>

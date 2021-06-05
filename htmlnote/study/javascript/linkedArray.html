@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Title</title>
+
+    <style>
+
+    </style>
+
+</head>
+<body>
+
+<pre>
+splice()是O(n)的，原因是，当你在中间插入一个，插入位置之后的元素都要集体向后移动一个位置，这就相当于你先找到了第x位置，插入了一个元素，而后面n-x个元素为了空出这个空，都往后移动了一个，这就是遍历所有的n个元素了，所以这个for会特别慢。
+
+但如果，你将id排成有序的，你只需要在index_ids中循环一遍，找到每个id所应该插入的位置，然后为了不进行所有元素位移，那就用新的数组存放id和index_ids，这样计算次数只是id和index_ids的数量之和，也不用先查找到idx。
+
+两个有序链表合并为一个有序链表也是这个方法。但链表的好处是插入不用移动元素。但即便如此，链表的插入在查找的时候就是得遍历部分的元素或者所有的元素。
+
+既然arrInsert没办法一次行算出来，那这个问题已经不是有序链表合并的问题了。
+
+平衡树能解决这个问题，{}对象就是个平衡树。但这个平衡树的问题是，应用在前面的方案上，你会处于一个平衡树与数组之间不断来回转换，如果转换次数太多，那只能是解决当前问题又会出新的问题。
+
+我想到一个可能可行的方法：每当一个数据insert的时候，你把这个数据的索引存到{}中，然后呢，当{}对象的大小达到1w个(10w也行，时间越长，回滚越麻烦，但不能1k，100，越晚执行约节省计算)的时候，你把{}中的元素挨个取出来存到val数组里(在取的过程中，{}不能进行插入了，你需要给它加上锁；此时如果有新的insert来了，你得需要用备用{}来存储，当{}取完了，把备用的放进去)，然后再清空{}，这是防止在合并val与index_ids时又有insert数据来，然后给val数组排序，执行:
+
+    可以看出, splice虽然臭名昭著, 但是相比一般人(本人)三脚猫的代码能力, 还是占了天大的优势的. 但是也差了链表几条街.
+
+同时, 这个实验充分地说明了, 数据结构和算法的重要性.
+</pre>
+
+<script src="../static/js/jquery-1.12.2.min.js"></script>
+<script type="text/javascript">
+
+    var arrInsert = [1, 2, 3];
+    var arrSplice = [1, 2, 3];
+    var arrList = new LinkedList();
+    arrList.append(1);
+    arrList.append(2);
+    arrList.append(3);
+
+    console.time("insert");
+    for(var i = 0; i < 10000; i++) {
+        arrInsert = insert(2, 5, arrInsert);
+    }
+    console.timeEnd("insert");
+    console.log(arrInsert.length);
+
+
+    console.time("splice");
+    for(var j = 0; j < 10000; j++) {
+        arrSplice.splice(2, 0, 5);
+    }
+    console.timeEnd("splice");
+    console.log(arrInsert.length);
+
+
+    console.time("arrList");
+    for(var k = 0; k < 10000; k++) {
+        arrList.insert(2, 0, 5);
+    }
+    console.timeEnd("arrList");
+    console.log(arrList.size());
+
+    function insert(index, e, arr) {
+        var curIndex = arr.length;
+
+        while(curIndex > index) {
+            arr[curIndex--] = arr[curIndex];
+        }
+
+        arr[curIndex] = e;
+
+        return arr;
+    }
+
+    function LinkedList() {
+
+        var Node = function(element){
+            this.element = element;
+            this.next = null;
+        };
+
+        var length = 0;
+        var head = null;
+
+        this.append = function(element){
+
+            var node = new Node(element),
+                current;
+
+            if (head === null){
+                head = node;
+            } else {
+
+                current = head;
+
+                while(current.next){
+                    current = current.next;
+                }
+
+                current.next = node;
+            }
+
+            length++;
+        };
+
+        this.insert = function(position, element){
+
+            if (position >= 0 && position <= length){
+
+                var node = new Node(element),
+                    current = head,
+                    previous,
+                    index = 0;
+
+                if (position === 0){
+
+                    node.next = current;
+                    head = node;
+
+                } else {
+                    while (index++ < position){
+                        previous = current;
+                        current = current.next;
+                    }
+                    node.next = current;
+                    previous.next = node;
+                }
+
+                length++;
+
+                return true;
+
+            } else {
+                return false;
+            }
+        };
+
+        this.getHead = function(){
+            return head;
+        };
+
+        this.size = function() {
+            return length;
+        };
+    }
+
+</script>
+</body>
+</html>

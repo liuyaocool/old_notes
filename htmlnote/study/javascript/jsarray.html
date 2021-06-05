@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Array</title>
+
+    <style>
+
+    </style>
+
+</head>
+<body>
+
+<input type="button" onclick="stackArray()" value="stack">
+<input type="button" onclick="lineArray()" value="line">
+<input type="button" onclick="sortArray()" value="sort">
+<input type="button" onclick="iteratorArray()" value="iterator">
+
+<pre>
+    模拟栈：push() / pop()
+    队列： shift() / unshift()
+    排序： reverse() / sort()
+    操作：
+        concat() 末尾添加 /
+        slice(2, 5) 选段复制 第三个到第六个；
+         slice(2) 第三个到最后；
+         slice(-2) 倒数第二个(数组长度+参数)到最后
+        splice(起始位置，删除个数, 要插入的项，要插入的项，要插入的项。。。) 返回被删除的项
+    位置： 比较时 使用 === 操作符
+        indexOf(要查找的项，查找起点) 从前向后找
+        lastIndexOf(要查找的项，查找起点) 从后向前找
+    迭代：
+         every()：对数组中的每一项运行给定函数，如果该函数对每一项都返回 true，则返回 true。
+         filter()：对数组中的每一项运行给定函数，返回该函数返回true的项 所组成的数组。
+         forEach()：对数组中的每一项运行给定函数。这个方法没有返回值。
+         map()：对数组中的每一项运行给定函数，返回每次函数调用的结果组成的数组。
+         some()：对数组中的每一项运行给定函数，如果该函数对任一项返回 true，则返回 true。
+    归并:
+        reduce(function(上次函数返回值(首次为第一项)， 数组项(第二项开始)，index, array){})
+        reduceRight() 与 reduce() 相反
+
+
+</pre>
+
+<script src="../../static/js/jquery-1.12.2.min.js"></script>
+<script src="../../static/js/base.js"></script>
+<script type="text/javascript">
+
+    function iteratorArray() {
+        var numbers = [1,2,3,4,5,4,3,2,1];
+
+        var everyResult = numbers.every(function(item, index, array){
+            return (item > 2);
+        });
+        console.log("every()：" + everyResult);//每一项都大于2
+
+        var someResult = numbers.some(function(item, index, array){
+            return (item > 4);
+        });
+        console.log("every()：" + someResult);//存在一项大于2
+
+        var filterResult = numbers.filter(function(item, index, array){
+            return (item > 4);
+        });
+        console.log("filter()：" + filterResult);//返回满足条件的项 所组成的新数组
+
+        var mapResult = numbers.map(function(item, index, array){
+            return item * 4;
+        });
+        console.log("map()：" + mapResult);//将每一项进行运算
+
+        numbers.forEach(function(item, index, array){
+            console.log("forE()-item*2: " + item * 2); //遍历
+        });
+    }
+
+    //array的模拟栈
+    function stackArray() {
+        var aa = ["a","b"];
+        console.log(deepCopy(aa));
+        aa.push("c", "d");
+        console.log(deepCopy(aa));
+        var last = aa.pop();//删除最后一项并返回最后一项
+        console.log(last);
+        console.log(deepCopy(aa));
+    }
+
+    //arrayd的队列
+    function lineArray() {
+        var aa = ["a","b"];
+        console.log(deepCopy(aa));
+        aa.push("c", "d");
+        console.log(deepCopy(aa));
+        var last = aa.shift();//删除最后一项并返回最后一项
+        console.log(last);
+        console.log(deepCopy(aa));
+        aa.unshift("e","f");
+        console.log(deepCopy(aa));
+    }
+
+    function sortArray() {
+        var aa = [1,2,3,5,4,8,7,6,9,11,101,110];
+        console.log(aa.concat(220, 202));//复制一个数组 参数可选，会将参数添加到新数组末尾
+        aa.reverse();//反序
+        console.log(aa.concat());
+        aa.sort();//不管是何数据类型，都会按照字符串方式排序
+        console.log(aa.concat());
+        aa.sort(function (a,b) {return a-b;});
+        console.log(aa.concat());
+    }
+
+
+</script>
+</body>
+</html>

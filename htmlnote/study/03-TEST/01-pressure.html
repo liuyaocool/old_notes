@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>OOM</title>
+
+    <link rel="stylesheet" href="../00-static/base.css">
+    <script src="../00-static/base.js"></script>
+
+    <style>
+
+    </style>
+</head>
+
+<body>
+<pre>
+
+    <h2 class="anchor">TcpCopy 工具 网易</h2>
+
+    <h2 class="anchor">Arthas 工具</h2>
+
+    java -jar arthas-boot.jar
+    1 enter
+    命令
+        dashboard 仪表盘 进程运行情况
+            如何看线程占cpu
+            top 看进程
+                top -Hp 看线程
+                    1：业务线程
+                    2：GC线程
+        thread 22
+        thread -b
+        heapdump
+            == jmap
+        jad com.xxx.ClassXXX
+            反编译代码有用吗：动态代理、类版本是否正确
+        redefine /root/XX.class
+            不需要停项目 就可以重新发布文件
+
+        trace ABC a -- 追踪
+            ABC:类 a:ABC中a方法
+            trace ABC b a方法调用b方法
+            。。。
+
+
+
+</pre>
+</body>
+</html>
