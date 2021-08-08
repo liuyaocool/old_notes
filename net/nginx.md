@@ -9,15 +9,410 @@ http://www.fhdq.net/
 
 ```
 
-# location
+# 版本区别
+
+## nginx.org 免费版
+
+## nginx.com 商业版
+
+## openresty.org
+
+Lua 二次开发
+
+## tengine.taobao.org
+
+C++ 二次开发
+
+## lua
+
+# 安装
+
+1. nginx.org 下载
+
+   1. Linux 使用wget 下载
+
+2. 解压源码：tar -zxvf nginx*
+
+3. cd 目录：./configure --prefix=/usr/local/nginx --with-http_ssl_module --with-http_stub_status_module
+
+   1. --with-http_stub_status_module ：上报自身状态 如k8s管理nginx
+   2. --with-http_ssl_module ：ssl模块 需要上一模块
+   3. ./nginx -V 可查看安装的模块
+
+4. 如果 报错
+
+   1. yum install -y pcre pcre-devel
+
+      ```
+      ./configure: error: the HTTP rewrite module requires the PCRE library.
+      You can either disable the module by using --without-http_rewrite_module
+      option, or install the PCRE library into the system, or build the PCRE library
+      statically from the source with nginx by using --with-pcre=<path> option.
+      ```
+
+   2. yum install -y zlib zlib-devel
+
+      ```
+      ./configure: error: the HTTP gzip module requires the zlib library.
+      ...
+      ```
+
+5. 执行 make
+
+6. 执行 make install
+
+7. 启动：
+
+   1. cd /usr/local/nginx
+   2. cd sbin
+   3. ./nginx
+      1. -c    指定配置文件
+
+8. 停止：nginx -s stop
+
+9. 访问不通，关闭防火墙
+
+   ```sh
+   # 关闭防火墙
+   systemctl stop firewalld.service
+   # 禁止开机启动防火墙
+   systemctl disable firewalld.service
+   ```
+
+10. 做成服务 nginx.service 
+
+    1. ??? centos8找教程
+
+11. 添加模块，如：3操作没有加两个--with
+
+    1. 源码目录重新编译：./configure --prefix=/usr/local/nginx --with-http_ssl_module --with-http_stub_status_module
+    2. 执行make
+    3. 备份  /user/local/nginx/sbin/nginx
+    4. 找到objs目录，将nginx可执行文件覆盖 /user/local/nginx/sbin/nginx
+    5. 模块添加完成
+
+# 代理
+
+## 正向代理 
+
+用户 -> nginx -> 服务器
+
+## 反向代理 
+
+用户 <- nginx <- 服务器
+
+# 域名
+
+域：.com 
+
+名：baidu
+
+查看域名信息：whois.juming.com
+
+# nginx.conf
+
+**注： 每一行的结尾要用“;”，不然报错**
+
+## web服务器
 
 ```
-location / {            定位资源:本地磁盘目录 -> URL对应关系
-    root html
-    index index.html
-    proxy_pass http(s)://baidu.com  # 代理路径
+http {
+    server{
+        listen 80;
+        server_name vvv.liuyao61.shop; # 域名，靠request headers 中的Host匹配
+
+        location / {  # 定位资源:本地磁盘目录 -> URL对应关系
+            root vvv; # 配置路径
+            index index.html; # 配置主页
+        }
+        
+         location =/xxx {  # 绝对匹配
+            root vvv; # 配置路径
+            index index.html; # 配置主页
+        }
+    }
+    server{
+        listen 80;
+        server_name local.liuyao61.shop; 
+
+        location / { 
+            root local; 
+            index index.html; 
+        }
+    }
 }
 ```
+
+## 反向代理
+
+```
+http {
+    server{
+        listen 80;
+        server_name localhost; # 域名，靠request headers 中的Host匹配
+
+        location / {
+            proxy_pass http://localhost:8080;  # 反向代理代理
+        }
+    }
+}
+```
+
+
+
+## 负载
+
+```
+http {
+    upstream lb { # 负载
+    	# weight 权重
+    	server localhost:88 weight=1;
+	    server localhost:99 weight=9;
+    }
+    
+    server{
+        listen 80;
+        server_name localhost; # 域名，靠request headers 中的Host匹配
+
+        location / {
+            proxy_pass http://lb;  # 负载
+        }
+    }
+}
+```
+
+## HTTPS
+
+需要在编译时安装ssl模块 见安装
+
+阿里云、腾讯云 申请ssl证书
+
+```
+server {
+    listen       443 ssl;
+    server_name  localhost;
+
+    ssl_certificate      cert.pem;
+    ssl_certificate_key  cert.key;
+
+#    ssl_session_cache    shared:SSL:1m;
+#    ssl_session_timeout  5m;
+
+#    ssl_ciphers  HIGH:!aNULL:!MD5;
+#    ssl_prefer_server_ciphers  on;
+
+    location / {
+    root   html;
+    index  index.html index.htm;
+    }
+}
+```
+
+http 自动跳转https 需要在首页手动跳转
+
+## 动静分离
+
+```
+location /css {
+	root /usr/local/nginx/static;
+}
+location /js {
+	root /usr/local/nginx/static;
+}
+```
+
+
+
+```
+location ~*/(css|js|images) {
+	root /usr/local/nginx/static; # -> /usr/local/nginx/static/css 自动拼装
+}
+```
+
+```
+location /css {
+	alias /usr/local/nginx/static/css; # -> 不自动拼装location
+}
+```
+
+## URL重写
+
+```
+rewrite ^$ /
+```
+
+
+
+# openresty
+
+lua 脚本 整合
+
+openresty.org
+
+## 安装
+
+### yum
+
+```
+cd /etc/yum.repos.d
+wget https://openresty.org/package/centos/openresty.repo
+yum check-update
+yum install -y openresty
+systemctl start openresty.service  # 启动
+systemctl status openresty.service  # 启动错误，则看日志
+cd /usr/local/openresty
+```
+
+## 热部署 
+
+仅lua脚本 方便调试
+
+```
+server {
+	lua_code_cache off; // 每次重新读lua
+	
+	location /lua {
+        default_type text/html;
+        content_by_lua_file conf/001.lua; # 热部署 需要外部文件
+    }
+}
+
+# 重启
+```
+
+## 执行lua脚本
+
+与nginx 打交道 要用ngx.xxx
+
+### nginx.conf 直接写
+
+```
+# 找到nginx.conf
+location /lua {
+	default_type text/html; # 浏览器会根据这个配置进行加载
+	content_by_lua 'ngx.say("<b>hello world~</b>")';
+}
+# 注意浏览器缓存？？？
+
+systemctl reload openresty.service
+```
+
+### ***.lua
+
+```
+# 001.lua
+ngx.say("<b>hello world~</b>")
+```
+
+```
+# nginx.conf
+location /lua {
+	default_type text/html;
+	content_by_lua_file conf/001.lua; # 相对路径 为nginx跟目录
+}
+```
+
+### include lua.conf
+
+```
+# lua.conf
+content_by_lua_file conf/001.lua;
+```
+
+```
+# nginx.conf
+location /lua {
+	default_type text/html;
+	include lua.conf; # 相对路径为nginx conf
+}
+```
+
+### lua_block
+
+```
+# nginx.conf
+location /lua {
+	default_type text/html;
+	content_by_lua_block{
+		ngx.say("<b>hello world~</b>")
+		ngx.say("hello world~")
+	};
+}
+```
+
+### include lua.conf 2
+
+```
+# lua2.conf
+location /lua {
+	default_type text/html;
+	content_by_lua_file conf/001.lua; # 相对路径 为nginx跟目录
+}
+```
+
+```
+# nginx.conf
+server {
+	include lua2.conf;
+}
+```
+
+### 获得参数
+
+```lua
+-- 001.lua 取一个参数
+ngx.say(ngx.var.arg_username)  
+```
+
+```lua
+-- 002.lua 取所有参数 ?username=ly&age=18&age=16
+
+-- local 本地 变量
+local uri_args = ngx.req.get_uri_args() 
+-- uri_args:table pairs:迭代每一行
+for k,v in pairs(uri_args) do
+	--[[ 
+    	table 理解成 list or map
+    	table 数据结构 实现伪面向对象
+    ]]--
+	if type(v) == "table" then
+		-- v 是个集合 -> age:18, 16
+		ngx.say(k, " : ", table.concat(v, ", "), "<br/>")
+	else
+		ngx.say(k, ": ", v, "<br/>")
+	end 
+end
+```
+
+```lua
+-- 003.lua 取请求头
+
+local headers = ngx.req.get_uri_headers() 
+ngx.say("Host: ", headers["Host"], "<br/>")
+ngx.say("user-agent: ", headers["user-agent"], "<br/>")
+ngx.say("user-agent: ", headers.user_agent, "<br/>")
+for k,v in pairs(headers) do
+	if type(v) == "table" then
+		ngx.say(k, " : ", table.concat(v, ", "), "<br/>")
+	else
+		ngx.say(k, ": ", v, "<br/>")
+	end 
+end
+```
+
+
+
+
+
+# ---------------OLD--------------
+
+# location
+
+    location / {            定位资源:本地磁盘目录 -> URL对应关系
+        root html; # 配置路径
+        index index.html; # 配置主页
+        proxy_pass http(s)://baidu.com;  # 代理路径 ？？
+    }
 
 ## 代理
 
