@@ -40,6 +40,8 @@
 
 用于分代垃圾回收算法，部分垃圾回收器使用的模型
 
+1.8：新生代 : 老年代 = 1 : 2
+
 1. 新生代 + 老年代 +   永久代(1.7)/元数据区(1.8 Metaspace)
    1. 永久代/元数据： Class对象
    2. 永久代必须指定大小限制 ，元数据可以设置，也可以不设置，无上限（受限于物理内存）
@@ -63,35 +65,66 @@
 
 ## 常见的垃圾回收器
 
+查看jdk 默认GC版本：java -XX:+PrintCommandLineFlags -version / jinfo PID
+
+JDK诞生 Serial追随，提高效率 诞生PS，配合CMS 诞生PN
+
+CMS是1.4后期引入，CMS是里程碑式的GC，它开启了并发回收的过程，但是CMS毛病较多，因此目前任何ー个JDK版本**默认都不是CMS**
+
+并发(Parallel)垃圾回收是因为无法忍受STW
+
 <img src="jvm/GCors.png" align="left" />
 
-1. Serial 年轻代 串行回收
+1. S + SO
 
-   <img src="jvm/GC-serial.png" align="left" />
+   1. Serial 年轻代 串行回收
 
-2. PS 年轻代 并行回收
+      safe point 安全点才能STW（stop-the-world）
 
-   <img src="jvm/GC-ParallelScavenge.png" align="left" />
+      单线程：黄色
 
-3. ParNew 年轻代 配合CMS的并行回收
+      <img src="jvm/GC-serial.png" align="left" />
 
-   <img src="jvm/GC-ParNew.png" align="left" />
+   2. Serial Old : 老年代 mark-sweep-compact
 
-4. SerialOld 
+2. PS + PO
 
-5. ParallelOld 
+   1. PS 年轻代 并行回收，大部分此为默认
 
-6. CMS：ConcurrentMarkSweep 老年代 并发的， 垃圾回收和应用程序同时运行，降低STW的时间(200ms)
+      <img src="jvm/GC-ParallelScavenge.png" align="left" />
 
-   <img src="jvm/GC-CMS.png" align="left" />
+   2. ParallelOld ：a compaction collector that uses multiple GC threads
 
-7. G1(10ms)
+3. PN + CMS
 
-8. ZGC (1ms) PK C++
+   1. ParNew 年轻代 配合CMS的并行回收 (Parallel New)，PS变种 为了配合CMS
 
-9. Shenandoah
+      <img src="jvm/GC-ParNew.png" align="left" />
 
-10. Eplison 调式JVM使用
+   2. CMS：ConcurrentMarkSweep 老年代 并发的， 垃圾回收和应用程序同时运行，降低STW的时间(200ms)
+
+      1. 三色标记 + Incremental Update
+      2. 并发标记最慢，占80%时间
+      3. 问题：架构一期110 2:15:00
+         1. MF
+         2. FG
+
+      <img src="jvm/GC-CMS.png" align="left" />
+
+4. G1(10ms) 
+
+   1. 1,7 刚出不完善，1.8首个完善版本，1.9默认
+   2. 三色标记 + SATB
+
+5. ZGC (1ms) PK C++
+
+   1. ColoredPointers + 写屏障？
+
+6. Shenandoah
+
+   1. ColoredPointers + 读屏障？
+
+7. Eplison 调式JVM使用
 
 调优就是调1、2、4、5。因为 1.8默认的垃圾回收：PS + ParallelOld
 
@@ -259,6 +292,146 @@ hot spot = 热点  ？
     - 多次被调用的循环（循环计数器：检测循环执行频率）
     - 进行编译
 
+# java内存模型
+
+# 内存屏障
+
+# JVM指令
+
+# 运行时数据区
+
+# 常用指令
+
+# 调优
+
+## 栈上分配 PK 线程本地分配
+
+两个默认打开，栈上分配不下了，优先线程本地分配
+
+1. 栈上分配，不需要GC
+
+   1. 线程私有 小对象
+
+   2. 无逃逸，关闭（-XX:-DoEscapeAnalysis）
+
+      ```java
+      // 有逃逸 效率会低一点
+      User u;
+      for(;;) {
+          u = new User(18, "zhangsan");
+      }
+      
+      // 无逃逸
+      for(;;) {
+          new User(18, "zhangsan");
+          // User u = new User(18, "zhangsan"); // ？？？
+      }
+      ```
+
+   3. 支持标量替换，关闭（-XX:-EliminateAllocations）
+
+      ```java
+      class T{
+          int m;
+          int n;
+      }
+      // 替换为
+      int m;
+      int n;
+      ```
+
+   4. 无需调整
+
+2. 线程本地分配 TLAB（Thread Local Allocation Buffer），不需要争用
+
+   1. 每线程默认占eden区1%，线程独有
+   2. 多线程不用竞争eden就可以申请空间
+   3. 小对象
+   4. 无需调整，关闭（-XX:-UseTLAB）
+
+
+
+## 参数
+
+-X:非标准参数   m:memory   n:new   s:最小值   x:max
+
+java 查看标准参数
+
+java -X 查看非标参数
+
+java -XX:+PrintFlagsFinal -version 查看不稳定参数，下个版本可能取消
+
+1. -Xmn（新生代new/young）
+2. -Xms（新生代 + 老年代）
+3. -Xmx（新生代 + 老年代），最好与-Xms设置成一样的 不让他弹性扩张
+4. -XX:MaxTenuringThreshold 多少次进入老年代（YGC)
+   1. Parallel Scavenge：15
+   2. CMS：6
+   3. G1：15
+   4. 动态年龄：eden+s -> s2 超过一半，将年龄最大的放到老年代
+
+### 常见垃圾回收器组合参数设定：(1.8)
+
+* -XX:+UseSerialGC = Serial New (DefNew) + Serial Old
+  * 小型程序。默认情况下不会是这种选项，HotSpot会根据计算机配置和JDK版本自动选择收集器
+* -XX:+UseParNewGC = ParNew + SerialOld
+  * 这个组合已经很少用（在某些版本中已经废弃）
+  * https://stackoverflow.com/questions/34962257/why-remove-support-for-parnewserialold-anddefnewcms-in-the-future
+* -XX:+UseConc<font color=red>(urrent)</font>MarkSweepGC = ParNew + CMS + Serial Old
+* -XX:+UseParallelGC = Parallel Scavenge + Parallel Old (1.8默认) 【PS + SerialOld】
+* -XX:+UseParallelOldGC = Parallel Scavenge + Parallel Old
+* -XX:+UseG1GC = G1
+* Linux中没找到默认GC的查看方法，而windows中会打印UseParallelGC 
+  * java +XX:+PrintCommandLineFlags -version
+  * 通过GC的日志来分辨
+
+* Linux下1.8版本默认的垃圾回收器到底是什么？
+
+  * 1.8.0_181 默认（看不出来）Copy MarkCompact
+  * 1.8.0_222 默认 PS + PO
+
+### 日志
+
+```
+# -Xlogg/opt/xxx/logs/xxx-xxx-gc-%t.log 
+-Xloggc:/opt/xxx/logs/xxx-xxx-gc-%t.log 
+-XX:+UseGCLogFileRotation 
+-XX:NumberOfGCLogFiles=5 
+-XX:GCLogFileSize=20M 
+-XX:+PrintGCDetails 
+-XX:+PrintGCDateStamps 
+-XX:+PrintGCCause
+```
+
+
+
+### 示例
+
+1. 区分概念：内存泄漏memory leak，内存溢出out of memory
+2. java -XX:+PrintCommandLineFlags HelloGC
+3. java -Xmn10M -Xms40M -Xmx60M -XX:+PrintCommandLineFlags -XX:+PrintGC HelloGC
+   1. PrintGCDetails PrintGCTimeStamps PrintGCCauses
+4. java -XX:+UseConcMarkSweepGC -XX:+PrintCommandLineFlags HelloGC
+5. java -XX:+PrintFlagsInitial 默认参数值
+6. java -XX:+PrintFlagsFinal 最终参数值
+7. java -XX:+PrintFlagsFinal | grep xxx 找到对应的参数
+8. java -XX:+PrintFlagsFinal -version |grep GC
+
+## CPU飙高 （架构一期 119）
+
+1. top 命令 查看进程占用 / jsp 查看java 进程
+2. top -Hp PID 查看进程的线程占用
+3. jstack PID 打印进程所有线程 其中nid为jstack线程号
+4. jstack -l PID 此处PID为线程PID（1.8需要16进制？？）
+
+## 内存飙高 （架构一期 119）
+
+
+
+## 三色标记
+
+
+
 
 
 
@@ -277,5 +450,5 @@ hot spot = 热点  ？
 
 第一节 00:50:00
 
- 第三节（93）  02:00:00
+ 119  01:50:00
 
