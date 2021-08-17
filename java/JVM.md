@@ -446,6 +446,43 @@ java -XX:+PrintFlagsFinal -version 查看不稳定参数，下个版本可能取
 
 
 
+# 脚本示例
+
+## java 启动
+
+```sh
+a=$(cd `dirname $0`;pwd)
+t=`date +%Y%m%d%H%M%S`
+logPath=logs
+logFileName=console.log
+jarFile=vpn-server.jar
+
+if [ ! -d $logPath ]; then
+    mkdir -p $logPath
+    echo create folder $logPath
+fi
+
+if [ -f $logFileName ];then
+    mv $logFileName $logPath/$t.log
+    echo backup log to $logPath/$t.log
+fi
+
+echo start $a/$jarFile
+
+/opt/java/jdk/jdk-11_0_10/bin/java -jar $a/$jarFile -Xms512M -Xmx512M -XX:+HeapDumpOnOutOfMemoryError -Xloggc:$a/logs-gc/%t.log -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=20M -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCCause  1 >& $logFileName  &
+
+-Xloggc:/opt/xxx/logs/xxx-xxx-gc-%t.log # 日志文件
+-Xloggc:/opt/xxx/logs/xxx-xxx-gc-%t.log # windows
+-XX:+UseGCLogFileRotation # 循环使用
+-XX:NumberOfGCLogFiles=5 # 5个日志文件 产生第6个 删除第一个
+-XX:GCLogFileSize=20M # 每个日志文件大小
+-XX:+PrintGCDetails
+-XX:+PrintGCDateStamps
+-XX:+PrintGCCause
+```
+
+
+
 # 进度
 
 第一节 00:50:00
