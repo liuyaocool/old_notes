@@ -413,16 +413,10 @@ ifup ens33
 
 - firewall-cmd --zone=public --list-ports --查看开放的端口列表           
 - firewall-cmd --query-port=3306/tcp --查看防火墙某个端口是否开放           
-- firewall-cmd --zone=public --add-port=3306/tcp --permanent --开放端口
-  - permanent ：是否要持久化            
+- firewall-cmd --zone=public --add-port=3306/tcp --permanent --开放端口            
 - firewall-cmd --zone=public --add-port=40000-45000/tcp --permanent --开放一段端口           
 - firewall-cmd --reload --重启防火墙          
 - systemctl start/stop/status firewalld --防火墙操作
-- systemctl disable firewalld.service  --禁止 防火墙开机启动
-- systemctl enable firewalld.service  --开启 防火墙开机启动
-- systemctl status firewalls.service -l --查看详细日志信息
-
-
 
 ## 开放端口 iptables
 
@@ -548,6 +542,16 @@ fi
 - gcc： yun install gcc
 - wget：yum install wget    --可下载网络资源
 
+# 定时任务
+
+1. 命令：crontab --help
+2. 规则保存位置：/var/spool/cron/用户名对应文件
+3. 添加规则： echo "*/1 * * * * command" >> /var/spool/cron/root # id
+4. 删除规则：
+   1. 
+5. 清空规则：crontab -r
+6. 不推荐：crontab ./scheduler.crontab，删除原来的 使用crontab文件中的规则
+
 # 常用操作
 
 ## 配置环境变量
@@ -612,6 +616,8 @@ hostname
 ## 其他查看
 
 - CPU使用情况: ps auxw|head -1;ps auxw|sort -rn -k3|head -10
+  - top
+  - top -Hp
 - 内存使用: ps auxw|head -1;ps auxw|sort -rn -k4|head -10
 - 虚拟内存使用: ps auxw|head -1;ps auxw|sort -rn -k5|head -10
 
@@ -740,4 +746,24 @@ echo start $a/BrowserInWeb.jar
 # 否则无法得到服务器PATH, 直接java -jar会报错找不到java
 /opt/java/jdk/jdk-11_0_10/bin/java -jar $a/BrowserInWeb.jar &
 ```
+
+
+
+
+
+# 技巧
+
+```shell
+# 打印特殊符号
+echo echo -e "\x2A" # 打印*号，2A对应ascii
+```
+
+
+
+# 字典
+
+| 名称          | 命令        |
+| ------------- | ----------- |
+| 查看 ASCII 表 | man 7 ascii |
+|               |             |
 
