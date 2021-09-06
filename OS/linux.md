@@ -550,6 +550,36 @@ fi
 
 # 常用操作
 
+## 安装.rpm软件
+
+
+
+## 文件操作
+
+    ./ 当前路径
+    / 根路径
+    ../ 上级路径
+    
+    echo `dirname $0`
+        /Users/liuyao/Desktop/PROJECT/BrowserInWeb --mac
+        ./ --linux
+    echo $(cd `dirname $0`;pwd)
+        /Users/liuyao/Desktop/PROJECT/BrowserInWeb --mac/linux
+    mac中双击shell可执行程序
+        pwd = /Users/liuyao
+    
+    单文件
+        上传: scp local_file linux_user@ip:linux_folder（/filename）
+        下载: scp linux_user@linux_ip:linux_file local_folder
+    多文件
+        上传: scp local_file1 local_file2 ... linux_user@ip:linux_folder
+    文件夹
+        上传: scp -v -r local_folder linux_user@ip:linux_folder
+        上传到相同目录下: scp -r ./folder/ root@ip:`pwd` // tab按键与esc按键之间那个
+        下载: scp -r linux_user@linux_ip:linux_folder local_folder
+    
+    tar解压: tar xf ***.tar.gz
+
 ## 配置环境变量
 
 - vi /etc/profile

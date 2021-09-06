@@ -407,7 +407,7 @@ total = eden + 1个survivor
 
 13. 使用MAT / jhat /jvisualvm 进行dump文件分析
      https://www.cnblogs.com/baihuitestsoftware/articles/6406271.html 
-jhat -J-mx512M xxx.dump
+    jhat -J-mx512M xxx.dump
     http://192.168.17.11:7000
     拉到最后：找到对应链接
     可以使用OQL查找特定问题对象
@@ -419,7 +419,7 @@ jhat -J-mx512M xxx.dump
 1. 程序启动加入参数：
 
    > ```shell
-   > java -Djava.rmi.server.hostname=192.168.17.11 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=11111 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false XXX
+   > java -Djava.rmi.server.hostname=144.34.187.149 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8091 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false XXX
    > ```
 
 2. 如果遭遇 Local host name unknown：XXX的错误，修改/etc/hosts文件，把XXX加入进去
@@ -677,7 +677,7 @@ OOM产生的原因多种多样，有些程序未必产生OOM，不断FGC(CPU飙�
 
 9. 重写finalize引发频繁GC
    小米云，HBase同步系统，系统通过nginx访问超时报警，最后排查，C++程序员重写finalize引发频繁GC问题
-为什么C++程序员会重写finalize？（new delete）
+   为什么C++程序员会重写finalize？（new delete）
    finalize耗时比较长（200ms）
    
 10. 如果有一个系统，内存一直消耗不超过10%，但是观察GC日志，发现FGC总是频繁产生，会是什么引起的？

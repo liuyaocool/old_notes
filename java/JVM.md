@@ -446,6 +446,42 @@ java -XX:+PrintFlagsFinal -version 查看不稳定参数，下个版本可能取
 
 
 
+# 调优实战
+
+## 选回收器
+
+垃圾收集器跟内存大小的关系
+
+1. Serial 几十兆
+2. PS 上百兆 - 几个G
+3. CMS - 20G
+4. G1 - 上百G
+5. ZGC - 4T - 16T（JDK13）
+
+## CPU
+
+1. jstack -l pid 导出
+2. 若某个线程锁住了，找到waiting on <一个号>
+3. <一个号>搜索这个文件 可定位到 具体线程 哪一行 锁住了
+
+## 内存
+
+### 可视化监控
+
+jvisualvm jconsole 压测过程用
+
+### 命令监控
+
+1. jmap -histo pid | head -20  查看内存 实例数等 影响不大
+
+2. jmap -dump:format=b,file=xxx pid ：手动导出堆文件 **影响大**
+
+   1. 若内存大，jmap执行期间会很大影响进程，除非做了高可用
+
+   2. 需设定参数，OOM时自动转储 堆文件，不推荐：
+
+       -XX:+HeapDumpOnOutOfMemoryError
+
 # 脚本示例
 
 ## java 启动
@@ -483,9 +519,45 @@ echo start $a/$jarFile
 
 
 
+# 字典
+
+## top
+
+1. top 看进程
+
+2. top -Hp pid 看程序进程
+
+3. top界面修改显示
+
+   ```
+   e - 以M显示
+   s – 改变画面更新频率
+   l – 关闭或开启第一部分第一行 top 信息的表示
+   t – 关闭或开启第一部分第二行 Tasks 和第三行 Cpus 信息的表示
+   m – 关闭或开启第一部分第四行 Mem 和 第五行 Swap 信息的表示
+   N – 以 PID 的大小的顺序排列表示进程列表
+   P – 以 CPU 占用率大小的顺序排列进程列表
+   M – 以内存占用率大小的顺序排列进程列表
+   h – 显示帮助
+   n – 设置在进程列表所显示进程的数量
+   q – 退出 top
+   s – 改变画面更新周期
+   ```
+
+## jmap
+
+```
+1）jmap -heap pid：输出堆内存设置和使用情况
+	（JDK11使用jhsdb jmap --heap --pid pid）
+2）jmap -histo pid：输出heap的直方图，包括类名，对象数量，对象占用大小
+3）jmap -histo:live pid：同上，只输出存活对象信息
+4）jmap -clstats pid：输出加载类信息
+5）jmap -help：jmap命令帮助信息
+```
+
+
+
 # 进度
 
-第一节 00:50:00
-
- 119  01:50:00
+最后两节
 
