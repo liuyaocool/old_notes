@@ -210,7 +210,7 @@ docker官网 需要注册
              CMD /bin/bash
              ```
 
-          3. docker build if dockerfile -t NAME:TAG .
+          3. docker build -f dockerfile -t NAME:TAG . ：注意最后那个点
 
           4. docker history NAME:TAG ：查看构建历史
 
@@ -320,15 +320,93 @@ docker官网 需要注册
 
 3. systemctl daemon-reload
 
+## 阿里云仓库
 
+### 创建
+
+1. 官网注册，控制台 / 搜索 容器镜像服务
+2. 创建个人实例，输入镜像密码
+3. 创建命名空间，可5个，小写字母开头
+4. 创建镜像仓库 -> 本地仓库
+
+### 使用
+
+1. 修改密码：个人实例 -> 访问凭证
+2. 登录
+   1. docker login --username=liuyaoshuaib registry.cn-hangzhou.aliyuncs.com
+   2. 输入密码
+3. 推送
+   1. docker tag fb52e22af1b0  registry.cn-hangzhou.aliyuncs.com/main-ly/open-ly:v1
+   2. docker push  registry.cn-hangzhou.aliyuncs.com/main-ly/open-ly:v1
+   3. main-ly ：命名空间
+   4. open-ly ：仓库名称
+4. 拉取镜像：docker pull registry.cn-hangzhou.aliyuncs.com/main-ly/open-ly:v1
+
+## 容器的网络
+
+### 外部访问容器，也叫宿主机访问容器
+
+1. 端口映射，容器与宿主机通信
+   1. -p ：指定端口映射，经常使用，**多用于生产**，格式：主机(宿主):容器端口
+   2. -P ：随机端口映射，容器内部的端口随机映射到主机的高端口，65535(2^16-1)
+2. 端口暴露：Dockerfile：EXPOSE 80
+3. 常见5种方式：
+   1. 宿主机随机端口映射容器所有端口：docker run -itd -P nginx /bin/bash
+   2. 宿主机随机端口映射容器的指定端口：docker run -itd -p 80 nginx /bin/bash
+   3. **宿主机指定端口映射容器指定端口，常用**
+      1. docker run -itd -p 80:80 nginx /bin/bash
+      2. docker run -itd -p 8080:80 nginx /bin/bash
+      3. docker run -itd -p 443:443 nginx /bin/bash
+      4. docker run -itd -p 80:80 -p 443:443 nginx /bin/bash
+      5. docker run -itd -p 80:80 -p 443:443 --restart=always nginx /bin/bash
+   4. 宿主机随机端口映射到容器指定IP、指定端口：
+      1. docker run -itd -p 172.0.0.10::80 nginx /bin/bash
+      2. :: 中间为宿主机端口 不写为随机
+      3. 多物理网卡使用
+   5. 宿主机指定端口映射到容器指定IP、指定端口：
+      1. docker run -itd -p 172.0.0.10:8080:80 nginx /bin/bash
+      2. 8080 ：宿主机指定端口
+      3. 多物理网卡使用
+4. 底层原理 iptables
+   1. docker run -d -p 方式启动的容器 自动添加一条NAT规则
+      1. docker run -d -p 81:80 nginx
+      2. http://192.168.61.161:81/ 可访问
+   2. docker ps
+      1. 0.0.0.0:81
+         1. 宿主机
+         2. 无固定ip，就是全网段 0.0.0.0
+   3. 查看宿主机ip地址：ip a ，可以看到 docker0 这一个网桥
+   4. 多块物理网卡，则可使用 -p 172.21.0.11:8080:80 指定某一块网卡 进行映射
+5. 查看容器端口：docker port ID
+6. 随机端口映射原理
+   1. docker run -d -P nginx
+   2. 与内核有关：sysctl -a | grep port | grep range ，随机端口范围
+
+### 容器访问容器，也叫容器的互联
+
+1. 创建一个桥接方式的自定网络
+   1. docker network create -d bridge network_name
+      1. -d ：指定docker网络类型
+   2. 例如
+      1. docker run -itd -p 127.0.0.1:80:80 --name centos-01 --network network_name centos
+      2. docker run -itd -p 127.0.0.1:81:81 --name centos-02 --network network_name centos
+      3. 可以ping通
+      4. docker inspect ID ：IPAddress，查看容器的ip
+   3. 生产案例
+      1. docker run -d -P nginx
+      2. docker run -d -P mysql
+      3. docker network ls
+
+1. 容器网络的几种模式
+   1. host，--net=host ：每个host模式容器 共享 宿主机的ip、port
+   2. container ，容器模式 ：容器2 共享容器1 的网卡 进行网络连接
+   3. none ：只有 lo 本地轮回
+   4. bridge，默认 ：通过 docker0虚拟网桥 互通
+   5. 自定义网络
 
 
 
 # 进度
-
-第10节 1
-
-
 
 6节 未看  镜像push私有仓库、镜像pull私有仓库
 
