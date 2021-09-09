@@ -25,3 +25,10 @@
 
 <img src="zookeeper\chooseleader.png" align="left">
 
+# 使用
+
+1. 连接：zkCli.sh -server 127.0.0.1:2181
+
+
+
+
