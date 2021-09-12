@@ -6,6 +6,8 @@ docker-ce 社区版
 
 docker-ee
 
+官方镜像仓库：hub.docker.com
+
 ## 概念
 
 docker容器是由docker镜像创建的运行实例。镜像运行起来就是容器。
@@ -404,9 +406,194 @@ docker官网 需要注册
    4. bridge，默认 ：通过 docker0虚拟网桥 互通
    5. 自定义网络
 
+## docker 三剑客
 
+docker machine
+
+docker compose
+
+docker swarm
+
+## 总结
+
+容器就是一个包，包含了应用以及所有依赖
+
+。。。
+
+# K8S kubernetes
+
+## 介绍
+
+容器集群管理工具，google开源：容器调度、容器管理、容器编排
+
+我们对容器集群的自动化部署
+
+优势：容器编排、轻量级、开源、弹性收缩、负载均衡
+
+概括：一切皆容器
+
+基础架构：
+
+1. <font color="red">**主节点Master**</font>：
+   1. 管理节点，集群里的大脑
+   2. **主要职责就是容器的调度**，决定应用放在那里运行
+   3. k8s-api + k8s核心组件等
+   4. 可以设置一个主节点或多个主节点
+2. <font color="red">**从节点Node**</font>-01：容器运行节点，可以理解成一个服务器
+   1. 运行服务容器，由master节点管理
+   2. **主要职责就是运行容器应用并监控并汇报容器状态**
+   3. 根据Master的要求**管理容器的生命周期:(创建、开始、运行、停止、销毁)**
+   4. 常见：**CentOS7.6、Ubuntu Server 16.04.4 LTS**
+   5. k8s注册组件等服务
+   6. 运行多个<font color="red">**工作单元pod**</font>
+      1. pod：k8s中最小的工作单元，每一个pod包含一个或多个容器
+      2. pod中的容器会被**视为一个整体**被master调度到一个node上运行
+   7. <font color="red">**控制器 controller**</font>：
+      1. k8s通常不会自己直接创建pod，而是通过controller来管理pod
+      2. controller定义pod的部署特性，内部端口 外部端口
+      3. 如：有几个剧本？在什么样的node上运行
+      4. 为了满足不同的工作场景，k8s提供了多种controller
+   8. <font color="red">**控制器 deployment**</font>：最常见的一种controller，管理pod的多个副本，并确保pod按照期望的状态运行
+   9. <font color="red">**副本 eplica set**</font>：控制器中的一种，能够实现多副本管理
+   10. <font color="red">**任务 job**</font>：用于运行结束就删除的应用，而其他的controller中的pod通常是可以长期持续运行的
+   11. <font color="red">**服务service**</font>：
+       1. deploment 可以部署多个副本，每个pod都有自己的IP，虚拟的网桥。外界如何来访问这些副本？
+       2. 创建service：
+          1. 定义外界访问一组特定的pod方式
+          2. service有自己的ip和port
+          3. service为pod提供了负载均衡等服务
+       3. 在k8s中运行容器pod与访问容器：controller负责运行容器、service负责访问容器
+   12. <font color="red">**命名空间namespace**</font>：
+       1. 可以将集群逻辑上划分多个虚拟的 集群：如(default、public)，虚拟的集群，就是一个namespace，然后从这上边创建容器
+       2. 不同namespace里的资源是相互隔离的
+3. Node-02：容器运行节点
+4. 。。。
+
+## k8s 集群环境搭建
+
+### 主机规划 至少4台
+
+| 主机名称    | IP             | 系统环境                  | 备注                   |
+| ----------- | -------------- | ------------------------- | ---------------------- |
+| k8s master  | 192.168.61.151 | Ubuntu Server 18.04.3 LTS | Rancher 容器云管理平台 |
+| k8s node-01 | 192.168.61.152 | Ubuntu Server 18.04.3 LTS | Rancher 容器云管理平台 |
+| k8s node-02 | 192.168.61.153 | Ubuntu Server 18.04.3 LTS | Rancher 容器云管理平台 |
+
+### 环境搭建 基于rancher1.6
+
+安装 要注意版本一致（环境搭建时 版本不一致踩的坑） 见 https://rancher.com/docs/rancher/v1.6/en/hosts/#supported-docker-versions
+
+>  新版本：https://rancher.com/docs/rancher/v2.x/en/
+
+| ubuntu version          | docker version | rancher version | k8s version        |
+| ----------------------- | -------------- | --------------- | ------------------ |
+| ubuntu server 16.04 lts | 17.03          | v1.6.12         |                    |
+| ubuntu server 18.04 lts | 18.09          | v1.6.26         | v1.12.7-rancher1-1 |
+| ubuntu server 20.04     | 20.10          | 暂无兼容版本    |                    |
+
+#### 
+
+1. Ubuntu Server 18.04.3 LTS
+
+   1. 分区 /root /home / ，home尽量大
+   2. sudo passwd root ，输入密码
+   3. su root
+   4. apt-get update
+   5. vim /etc/fstab ，注释交换空间
+   6. ufw disable ，关闭防火墙
+
+2. 安装docker
+
+   1. curl https://releases.rancher.com/install-docker/18.09.sh | sh ：**注意版本兼容性**
+
+   2. vi /etc/docker/daemon.json ，配置加速节点
+
+      ```json
+      {
+        "registry-mirrors": ["https://1dr5t5mc.mirror.aliyuncs.com"]
+      }
+      ```
+
+   3. systemctl restart docker ，重启docker
+
+   4. systemctl enable docker ，开机启动
+
+3. 关机power，创建快照，链接克隆两个节点，K8S-Node-01、K8S-Node-02
+
+4. 安装rancher
+
+   1. docker run -d --restart always --name rancher-server -p 80:8080 rancher/server:v1.6.26
+   2. 浏览器输入 ip
+
+5. 使用rancher
+
+   1. 设置登录方式：ADMIN -> Access Control
+      1. 选择LOCAL
+      2. 输入用户名、密码：liuyao、123456
+      3. 点击 Enable Local Auth，开启本地登录
+      4. 退出，选择中文，登录
+   2. 创建镜像库：基础架构 -> 镜像库
+      1. 选择 DOCKERHUB，输入用户名密码：liuyao、123456
+      2. 看到Active
+   3. 环境模板：Default -> 环境管理
+      1. 添加环境模板
+      2. 选择 Kubernetes
+      3. 添加名称、描述：K8S_CN、中国区K8S镜像加速
+      4. 设置共享权限
+      5. 点击编辑设置，选择k8s版本,1.12.x
+      6. 配置4个参数
+         1. Private Registry for Add-Ons and Pod Infra Container Image：registry.cn-shenzhen.aliyuncs.com
+         2. Image namespace for  Add-Ons and Pod Infra Container Image：rancher_cn
+         3. Image namespace for kubernetes-helm Image：rancher_cn ，高版本没有此选项
+         4. Pod Infra Container Image：rancher_cn/pause-amd64:3.0
+      7. 点击设置
+      8. 最下边 点击创建
+   4. 环境：Default -> 环境管理
+      1. 添加环境
+      2. 选择刚才创建的 K8S_CN
+      3. 填写 名称、描述
+      4. 设置访问控制
+      5. 点击创建
+      6. 找到创建的环境，最右侧三个点，依次点击 创建为缺省、切换至此环境
+      7. 然后等待添加Node节点
+   5. 添加节点：基础架构 -> 主机
+      1. Master：点击添加主机，将脚本复制到master节点，（应该是rancher server 部署在哪台机器，那一台就是master节点）
+      2. Node：点击添加主机，将脚本复制到多个Node节点
+   6. 网络优化：service 添加端口映射 TCP
+      1. 云主机：30000 ~ 32767
+      2. 私有云虚拟机：firewall-cmd --permanent --add-port 30000-32767/tcp
+   7. 集群创建容器应用：K8S UI，KUBERNETES -> 仪表盘 -> 概况(老版本 overview)
+      1. 右上角创建，找到创建应用 选项卡（老版本为 单选框 填写应用详情）
+      2. 例如：
+         1. 应用名称：nging-test
+         2. 容器镜像：nginx
+         3. 容器组个数：1
+         4. 服务：外部
+         5. 端口：82，目标端口：80，协议：TCP
+      3. 点击部署
+      4. 找到服务，外部端点，即可打开nginx
+      5. 访问不了，找到基础架构 -> 主机 -> 节点 -> 应用:kubernetes-loadbalances
+   8. 使用私有镜像仓库：基础架构 -> 镜像库
+      1. 点击 添加镜像库 
+      2. 点击 Custom
+      3. 输入信息：阿里云为例
+         1. 登录，找到 容器镜像服务 控制台
+         2. 个人实例 -> 镜像仓库 -> 点击仓库名称
+         3. 复制公网地址，不要带https
+         4. 登录阿里云Docker Registry 中找到username
+         5. 输入镜像仓库密码
+         6. 创建
+      4. 从自己的镜像仓库拉取镜像
+         1. 推送本地镜像到远程仓库
+         2. 创建k8s 应用：如 阿里云仓库
+            1. 找到仓库基本信息，找到镜像全名:tag
+            2. registry.cn-hangzhou.aliyuncs.com/main-ly/open-ly:[镜像版本号]
 
 # 进度
+
+docker 基础 ：Dockerfile 构建镜像
+
+
 
 6节 未看  镜像push私有仓库、镜像pull私有仓库
 

@@ -8,7 +8,15 @@
 
 # 字体
 
+<font color="red">**asdfasdfdsaf**</font>
+
+<font color="red">sdfasdfdsaf</font>
+
 *斜体：ctrl+i 或 单星花包着*
+
+福利哈多*<u>家的福利哈多</u>*sa
+
+爱上了对方会尽量跨境电商发圣诞节快乐恢复流口水交电话费留点时间客户非
 
 **加粗：ctrl+b 或 双星花包着 **
 

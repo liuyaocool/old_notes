@@ -165,6 +165,8 @@ ubuntu 2020.10 60GB
 - 取出yum包装：yum downloader PACKAGE_NAME
 - 重新安装一个yum包：yum reinstall PACKAGE_NAME
 
+# apt
+
 
 
 ## 报错
@@ -741,6 +743,13 @@ cat 6379.conf | grep ^#  # 查看#开头的行
 cat 6379.conf | grep ^[^#]  # 查看非#开头的行
 
 ```
+
+# ubuntu
+
+## 修改主机名
+
+vi /etc/hostname
+
 
 
 # 脚本示例
