@@ -186,7 +186,7 @@ docker官网 需要注册
 
              ```
              # 从哪一个基础镜像构建
-             FROM centos
+             FROM centos:latest
              
              # 定义作者信息
              MAINTAINER 'liuyao'
@@ -222,6 +222,37 @@ docker官网 需要注册
 
 11. 扩展：portus 镜像仓库前端分布认证
 
+Dockerfile
+
+```
+## tomcat :
+# 从哪一个基础镜像构建
+FROM tomcat:latest
+
+# 设置登录以后工作路径 路径不存在 创建
+WORKDIR /usr/local/tomcat/webapps
+
+# docker-web ：Dockerfile 同级文件夹
+# ./docker-web ：容器 WORKDIR/docker-web
+ADD docker-web ./docker-web
+```
+
+```
+## redis :
+FROM centos
+RUN ["yum", "install", "-y", "gcc", "gcc-c++", "net-tools", "make"]
+WORKDIR /usr/local
+ADD redis-xxx.tar.gz .
+WORKDIR /usr/local/redis-xxx/src
+RUN make && make install
+WORKDIR /usr/local/redis-xxx
+ADD redis-7000.conf .
+EXPOSE 7000
+CMD ["redis-server", "redis-7000.conf"]
+```
+
+
+
 ## 仓库操作
 
 存储镜像
@@ -251,7 +282,7 @@ docker官网 需要注册
 
 ### 搭建 Harbor组件 **企业级**
 
-1. Docker-compose：
+1. Docker-compose：docker compose 官网
 
    1. 在线
       1. cd /var/local
@@ -261,6 +292,7 @@ docker官网 需要注册
       1. github.com/docker/compose/release
       2. mv xxx /usr/local/bin/docker-compose
       3. sudo chmod +x /usr/local/bin/docker-compose
+   3. docker-compose version
 
 2. harbor
 
@@ -386,25 +418,53 @@ docker官网 需要注册
 
 ### 容器访问容器，也叫容器的互联
 
-1. 创建一个桥接方式的自定网络
-   1. docker network create -d bridge network_name
-      1. -d ：指定docker网络类型
-   2. 例如
-      1. docker run -itd -p 127.0.0.1:80:80 --name centos-01 --network network_name centos
-      2. docker run -itd -p 127.0.0.1:81:81 --name centos-02 --network network_name centos
-      3. 可以ping通
-      4. docker inspect ID ：IPAddress，查看容器的ip
-   3. 生产案例
-      1. docker run -d -P nginx
-      2. docker run -d -P mysql
-      3. docker network ls
+创建一个桥接方式的自定网络，宿主机虚拟网卡
 
-1. 容器网络的几种模式
-   1. host，--net=host ：每个host模式容器 共享 宿主机的ip、port
-   2. container ，容器模式 ：容器2 共享容器1 的网卡 进行网络连接
-   3. none ：只有 lo 本地轮回
-   4. bridge，默认 ：通过 docker0虚拟网桥 互通
-   5. 自定义网络
+1. docker network create -d bridge network_name
+   1. -d ：指定docker网络类型
+2. 例如
+   1. docker run -itd -p 127.0.0.1:80:80 --name centos-01 --network network_name centos
+   2. docker run -itd -p 127.0.0.1:81:81 --name centos-02 --network network_name centos
+   3. 可以ping通
+   4. docker inspect ID ：IPAddress，查看容器的ip
+3. 例如2
+   1. docker network connect my-bridge tomcat（or NAME）
+   2. docker network connect my-bridge mysql
+4. 生产案例
+   1. docker run -d -P nginx
+   2. docker run -d -P mysql
+   3. docker network ls
+
+容器单向通信
+
+1. docker run -d --name tomcat --link mysql
+2. 进入 tomcat ，ping mysql 可以通
+
+容器双向通信
+
+### 容器网络的几种模式
+
+1. host，--net=host ：每个host模式容器 共享 宿主机的ip、port
+2. container ，容器模式 ：容器2 共享容器1 的网卡 进行网络连接
+3. none ：只有 lo 本地轮回
+4. bridge，默认 ：通过 docker0虚拟网桥 互通
+5. 自定义网络
+
+## 容器数据共享
+
+原理： 宿主机共享目录
+
+1. -v ：挂载宿主机目录
+   1. docker run --name t1 -v /usr/webapps:/usr/local/tomcat/webapps tomcat
+   2. /usr/webapps ：宿主机路径
+   3. /usr/local/tomcat/webapps ：容器路径
+   4. 如：docker  run --name t1 -p 8000:8080 -d -v /usr/webapps:/usr/local/tomcat/webapps tomcat
+2. --volumes-from ：共享容器内挂载点
+   1. 创建共享容器，不运行，同一管理挂载点：docker create --name webpages -v /webapps:/tomcat/webapps tomcat /bin/true
+   2. docker run --volumes-from webpages --name t1 -d tomcat ：使用共享容器的挂载配置
+   3. 如：
+      1. docker create --name webpage -v /usr/webapps:/usr/local/tomcat/webapps tomcat /bin/true
+      2. docker run -p 8002:8080 --volumes-from webpages --name t1 -d tomcat
 
 ## docker 三剑客
 
