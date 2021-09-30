@@ -4,6 +4,27 @@
 - 服务：services.msc
 - 配置管理：gpedit.msc
 
+# 修改用户家目录
+
+1. 修改配置
+
+   <img src="windows/user_home.png">
+
+   将配置改为 其他盘
+
+2. 将原目录下数据拷贝过来
+
+3. 重启
+
+4. 其他注册表信息
+
+   ```
+   HKEY_CURRENT_USER/Software/Microsoft/Windows/CurrentVersion/Explorer/User Shell Folders
+   HKEY_CURRENT_USER/Software/Microsoft/Windows/CurrentVersion/Explorer/Shell Folders
+   ```
+
+5. 验证：Set | fingstr USERPROFILE
+
 # win10 关闭自动更新
 
 1. win+r -> 输入 services.msc
