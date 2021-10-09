@@ -489,6 +489,42 @@ https://blog.csdn.net/u012294618/article/details/78427864
    - #! 开头的一行会设置解释器运行环境
    - #! 对文件的内容没有影响，#开头会被当成注释
 
+## 重定向 >  >>  >&  <&  <  <<
+
+https://www.runoob.com/linux/linux-shell-io-redirections.html 
+
+```
+文件描述符
+    0 标准输入(stdin)
+    1 标准输出(stdout)
+    2 标准错误(stderr)
+
+    1>/dev/null --标准输出指向空，即控制台无内容
+    2>/dev/null --标准错误指向空
+
+echo "123" >> 文件名 --文件内容追加一行数据
+echo "123" > 文件名 --文件内容替换为数据
+
+>& ： >代表重定向 &代表指向文件描述符,不指向文件
+
+socket连接示例
+    cd /proc/$$/fd
+        $$: 当前解释程序进程id号
+        fd: 文件描述符
+    exec 8<> /dev/tcp/www.baidu.com/80 --建立socket连接
+        <>: I/O 数入/输出
+        8<>: 8指向socket(套接字通信,内核中转换为套接字)
+    echo -e 'get / http/1.0\n' >& 8 --http协议输送到百度
+        >: 重定向输出
+        &: 代表8是文件描述符,不是文件
+        -e: \n 转化为换行符
+        ''之间: 最简单http协议
+    cat 0<& 8 --读取返回结果
+        标准输入0 来自文件描述符8
+        cat: 读文件,从标准输入读东西
+    exec 8<& - --关掉
+```
+
 ## 语法
 
 ### shell参数
