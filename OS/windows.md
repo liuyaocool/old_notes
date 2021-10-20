@@ -49,6 +49,12 @@ xp 使用SMBv1协议, 而比较新的系统都是SMBv2 SMBv3等高版本, 协议
 
 # DOS
 
+## 隐藏输出
+
+1. 标准输出：CMD >nul
+2. 错误输出：CMD 2>nul
+   1. 注：就算报错不输出，也不会继续执行后续内容，如： mkdir target 2> nul && gcc
+
 ## 命令
 
 - 查看内存频率：wmic memorychip
