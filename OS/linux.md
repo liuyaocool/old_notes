@@ -125,19 +125,27 @@ yum makcache 出现 Failed to set locale, defaulting to C.UTF-8 错误
 
 ## ubuntu示例
 
-ubuntu 2020.10 60GB
+ubuntu 20.04 LTS(长期支持) 60GB
 
-- 分区
+1. 欢迎页，选中文，安装
+2. 键盘布局，选Chinese
+3. 更新和其他软件，只选最小安装
+4. 安装类型，清除整个磁盘并安装Ubuntu
+5. 您在什么地方，Shanghai
+6. 您是谁，填写用户信息，继续
+7. 安装完成，修改root 密码 ：sudo passwd root
+8. 关机，取消CD/DVD挂载
+9. 开机，安装 VMware Tools
+   1. cd/dvd 改为使用物理驱动器
+   2. 打开系统 解压光盘 ***.tar.gz 到系统
+   3. root权限执行 ./VMWare***.pl
+   4. ok
+
+- 参考分区
   - /dev/sda1 efi                                 512MB
   - /dev/sda1 biosgrub                       512MB
   - /dev/sda1 ext4            /home        40960MB
   - /dev/sda1 ext4            /                 22439MB
-- 修改root 密码 ：sudo passwd root
-- 安装vmware tools 
-  - cd/dvd 改为使用物理驱动器
-  - 打开系统 解压光盘 ***.tar.gz 到系统
-  - root权限执行 ./VMWare***.pl
-  - ok
 
 # yum
 
