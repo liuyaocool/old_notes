@@ -127,10 +127,10 @@ yum makcache 出现 Failed to set locale, defaulting to C.UTF-8 错误
 
 ubuntu 20.04 LTS(长期支持) 60GB
 
-1. 欢迎页，选中文，安装
-2. 键盘布局，选Chinese
-3. 更新和其他软件，只选最小安装
-4. 安装类型，清除整个磁盘并安装Ubuntu
+1. 欢迎页，选英文，install Ubuntu
+2. 键盘布局，选默认（US）
+3. 更新和其他软件，只选 Minimal installation
+4. 安装类型，选Erase disk and install Ubuntu，install now，continue
 5. 您在什么地方，Shanghai
 6. 您是谁，填写用户信息，继续
 7. 安装完成，修改root 密码 ：sudo passwd root
