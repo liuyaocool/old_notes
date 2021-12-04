@@ -125,19 +125,27 @@ yum makcache 出现 Failed to set locale, defaulting to C.UTF-8 错误
 
 ## ubuntu示例
 
-ubuntu 2020.10 60GB
+ubuntu 20.04 LTS(长期支持) 60GB
 
-- 分区
+1. 欢迎页，选英文，install Ubuntu
+2. 键盘布局，选默认（US）
+3. 更新和其他软件，只选 Minimal installation
+4. 安装类型，选Erase disk and install Ubuntu，install now，continue
+5. 您在什么地方，Shanghai
+6. 您是谁，填写用户信息，继续
+7. 安装完成，修改root 密码 ：sudo passwd root
+8. 关机，取消CD/DVD挂载
+9. 开机，安装 VMware Tools
+   1. cd/dvd 改为使用物理驱动器
+   2. 打开系统 解压光盘 ***.tar.gz 到系统
+   3. root权限执行 ./VMWare***.pl
+   4. ok
+
+- 参考分区
   - /dev/sda1 efi                                 512MB
   - /dev/sda1 biosgrub                       512MB
   - /dev/sda1 ext4            /home        40960MB
   - /dev/sda1 ext4            /                 22439MB
-- 修改root 密码 ：sudo passwd root
-- 安装vmware tools 
-  - cd/dvd 改为使用物理驱动器
-  - 打开系统 解压光盘 ***.tar.gz 到系统
-  - root权限执行 ./VMWare***.pl
-  - ok
 
 # rpm
 
@@ -492,6 +500,42 @@ https://blog.csdn.net/u012294618/article/details/78427864
    - #! 一句必须在文件的最开始，第一行
    - #! 开头的一行会设置解释器运行环境
    - #! 对文件的内容没有影响，#开头会被当成注释
+
+## 重定向 >  >>  >&  <&  <  <<
+
+https://www.runoob.com/linux/linux-shell-io-redirections.html 
+
+```
+文件描述符
+    0 标准输入(stdin)
+    1 标准输出(stdout)
+    2 标准错误(stderr)
+
+    1>/dev/null --标准输出指向空，即控制台无内容
+    2>/dev/null --标准错误指向空
+
+echo "123" >> 文件名 --文件内容追加一行数据
+echo "123" > 文件名 --文件内容替换为数据
+
+>& ： >代表重定向 &代表指向文件描述符,不指向文件
+
+socket连接示例
+    cd /proc/$$/fd
+        $$: 当前解释程序进程id号
+        fd: 文件描述符
+    exec 8<> /dev/tcp/www.baidu.com/80 --建立socket连接
+        <>: I/O 数入/输出
+        8<>: 8指向socket(套接字通信,内核中转换为套接字)
+    echo -e 'get / http/1.0\n' >& 8 --http协议输送到百度
+        >: 重定向输出
+        &: 代表8是文件描述符,不是文件
+        -e: \n 转化为换行符
+        ''之间: 最简单http协议
+    cat 0<& 8 --读取返回结果
+        标准输入0 来自文件描述符8
+        cat: 读文件,从标准输入读东西
+    exec 8<& - --关掉
+```
 
 ## 语法
 
