@@ -470,7 +470,7 @@ CMD ["redis-server", "redis-7000.conf"]
 
 docker machine
 
-docker compose
+docker compose ：单机编排工具
 
 docker swarm
 
@@ -494,6 +494,10 @@ docker swarm
 
 基础架构：
 
+<img src="docker_k8s/k8s_framework.png" align="left">
+
+
+
 1. <font color="red">**主节点Master**</font>：
    1. 管理节点，集群里的大脑
    2. **主要职责就是容器的调度**，决定应用放在那里运行
@@ -507,14 +511,17 @@ docker swarm
    5. k8s注册组件等服务
    6. 运行多个<font color="red">**工作单元pod**</font>
       1. pod：k8s中最小的工作单元，每一个pod包含一个或多个容器
-      2. pod中的容器会被**视为一个整体**被master调度到一个node上运行
+      2. 包含 Pause(必须)、user container1.。。
+         1. Pause：提供共享网络空间，容器间可以用localhost:port 访问
+         2. 为当前pod 提供volumes挂载数据卷
+      3. pod中的容器会被**视为一个整体**被master调度到一个node上运行
    7. <font color="red">**控制器 controller**</font>：
       1. k8s通常不会自己直接创建pod，而是通过controller来管理pod
       2. controller定义pod的部署特性，内部端口 外部端口
       3. 如：有几个剧本？在什么样的node上运行
       4. 为了满足不同的工作场景，k8s提供了多种controller
    8. <font color="red">**控制器 deployment**</font>：最常见的一种controller，管理pod的多个副本，并确保pod按照期望的状态运行
-   9. <font color="red">**副本 eplica set**</font>：控制器中的一种，能够实现多副本管理
+   9. <font color="red">**副本 replica set**</font>：控制器中的一种，能够实现多副本管理
    10. <font color="red">**任务 job**</font>：用于运行结束就删除的应用，而其他的controller中的pod通常是可以长期持续运行的
    11. <font color="red">**服务service**</font>：
        1. deploment 可以部署多个副本，每个pod都有自己的IP，虚拟的网桥。外界如何来访问这些副本？
@@ -549,9 +556,9 @@ docker swarm
 | ----------------------- | -------------- | --------------- | ------------------ |
 | ubuntu server 16.04 lts | 17.03          | v1.6.12         |                    |
 | ubuntu server 18.04 lts | 18.09          | v1.6.26         | v1.12.7-rancher1-1 |
-| ubuntu server 20.04     | 20.10          | 暂无兼容版本    |                    |
+| ubuntu server 20.04     | 20.10          |                 |                    |
 
-#### 
+
 
 1. Ubuntu Server 18.04.3 LTS
 
@@ -649,9 +656,29 @@ docker swarm
             1. 找到仓库基本信息，找到镜像全名:tag
             2. registry.cn-hangzhou.aliyuncs.com/main-ly/open-ly:[镜像版本号]
 
+### k8s 搭建
+
+**主机配置**
+
+1. 设置上海时区
+
+2. 设置hosts
+
+   ```
+   192.168.61.150 K8S-Master
+   192.168.61.151 K8S-Node-01
+   192.168.61.152 K8S-Node-02
+   ```
+
+3. 关闭防火墙
+
+**安装kubeadmin**
+
+
+
 # 进度
 
-docker 基础 ：Dockerfile 构建镜像
+
 
 
 
